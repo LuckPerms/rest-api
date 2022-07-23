@@ -25,35 +25,20 @@
 
 package me.lucko.luckperms.extension.rest;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.ImmutableSet;
 
-import me.lucko.luckperms.extension.rest.bind.ContextSetDeserializer;
-import me.lucko.luckperms.extension.rest.bind.ContextSetSerializer;
-import me.lucko.luckperms.extension.rest.bind.GroupSerializer;
-import me.lucko.luckperms.extension.rest.bind.MetadataSerializer;
-import me.lucko.luckperms.extension.rest.bind.NodeDeserializer;
-import me.lucko.luckperms.extension.rest.bind.NodeSerializer;
-import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
-import me.lucko.luckperms.extension.rest.bind.UserSerializer;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
 import me.lucko.luckperms.extension.rest.controller.PermissionHolderController;
 import me.lucko.luckperms.extension.rest.controller.UserController;
 import me.lucko.luckperms.extension.rest.util.CustomObjectMapper;
+import me.lucko.luckperms.extension.rest.util.StubMessagingService;
 import me.lucko.luckperms.extension.rest.util.SwaggerUi;
 
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.cacheddata.CachedMetaData;
-import net.luckperms.api.context.ContextSet;
-import net.luckperms.api.model.group.Group;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.Node;
-import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.messaging.MessagingService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,8 +117,10 @@ public class RestServer implements AutoCloseable {
     private void setupRoutes(Javalin app, LuckPerms luckPerms) {
         app.get("/", ctx -> ctx.redirect("/docs/swagger-ui"));
 
-        UserController userController = new UserController(luckPerms.getUserManager(), this.objectMapper);
-        GroupController groupController = new GroupController(luckPerms.getGroupManager(), this.objectMapper);
+        MessagingService messagingService = luckPerms.getMessagingService().orElse(StubMessagingService.INSTANCE);
+
+        UserController userController = new UserController(luckPerms.getUserManager(), messagingService, this.objectMapper);
+        GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
 
         app.routes(() -> {
             path("user", () -> setupControllerRoutes(userController));

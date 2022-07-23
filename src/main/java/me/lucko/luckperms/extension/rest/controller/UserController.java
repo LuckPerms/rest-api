@@ -34,6 +34,7 @@ import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.messaging.MessagingService;
 import net.luckperms.api.model.PermissionHolder;
 import net.luckperms.api.model.PlayerSaveResult;
 import net.luckperms.api.model.user.User;
@@ -52,10 +53,12 @@ import java.util.concurrent.CompletableFuture;
 public class UserController implements PermissionHolderController {
 
     private final UserManager userManager;
+    private final MessagingService messagingService;
     private final ObjectMapper objectMapper;
 
-    public UserController(UserManager userManager, ObjectMapper objectMapper) {
+    public UserController(UserManager userManager, MessagingService messagingService, ObjectMapper objectMapper) {
         this.userManager = userManager;
+        this.messagingService = messagingService;
         this.objectMapper = objectMapper;
     }
 
@@ -123,8 +126,12 @@ public class UserController implements PermissionHolderController {
     @Override
     public void delete(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        CompletableFuture<?> future = this.userManager.modifyUser(uniqueId, user -> user.data().clear())
-                .thenCompose(x -> this.userManager.deletePlayerData(uniqueId));
+        CompletableFuture<Void> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
+            user.data().clear();
+            return this.userManager.saveUser(user).thenRun(() -> {
+                this.messagingService.pushUserUpdate(user);
+            });
+        });
         ctx.future(future, result -> ctx.result("ok"));
     }
 
@@ -152,7 +159,10 @@ public class UserController implements PermissionHolderController {
             for (Node node : nodes) {
                 user.data().add(node);
             }
-            return this.userManager.saveUser(user).thenApply(v -> user.getNodes());
+            return this.userManager.saveUser(user).thenApply(v -> {
+                this.messagingService.pushUserUpdate(user);
+                return user.getNodes();
+            });
         });
         ctx.future(future);
     }
@@ -174,7 +184,10 @@ public class UserController implements PermissionHolderController {
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
             user.data().add(node);
-            return this.userManager.saveUser(user).thenApply(v -> user.getNodes());
+            return this.userManager.saveUser(user).thenApply(v -> {
+                this.messagingService.pushUserUpdate(user);
+                return user.getNodes();
+            });
         });
         ctx.future(future);
     }
@@ -190,7 +203,10 @@ public class UserController implements PermissionHolderController {
             for (Node node : nodes) {
                 user.data().add(node);
             }
-            return this.userManager.saveUser(user).thenApply(v -> user.getNodes());
+            return this.userManager.saveUser(user).thenApply(v -> {
+                this.messagingService.pushUserUpdate(user);
+                return user.getNodes();
+            });
         });
         ctx.future(future);
     }

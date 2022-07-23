@@ -34,6 +34,7 @@ import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.messaging.MessagingService;
 import net.luckperms.api.model.PermissionHolder;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.group.GroupManager;
@@ -50,10 +51,12 @@ import java.util.stream.Collectors;
 public class GroupController implements PermissionHolderController {
 
     private final GroupManager groupManager;
+    private final MessagingService messagingService;
     private final ObjectMapper objectMapper;
 
-    public GroupController(GroupManager groupManager, ObjectMapper objectMapper) {
+    public GroupController(GroupManager groupManager, MessagingService messagingService, ObjectMapper objectMapper) {
         this.groupManager = groupManager;
+        this.messagingService = messagingService;
         this.objectMapper = objectMapper;
     }
 
@@ -112,7 +115,10 @@ public class GroupController implements PermissionHolderController {
 
         CompletableFuture<Boolean> future = this.groupManager.loadGroup(name).thenCompose(opt -> {
             if (opt.isPresent()) {
-                return this.groupManager.deleteGroup(opt.get()).thenApply(x -> true);
+                return this.groupManager.deleteGroup(opt.get()).thenApply(x -> {
+                    this.messagingService.pushUpdate();
+                    return true;
+                });
             } else {
                 return CompletableFuture.completedFuture(false);
             }
@@ -153,7 +159,10 @@ public class GroupController implements PermissionHolderController {
                 for (Node node : nodes) {
                     group.data().add(node);
                 }
-                return this.groupManager.saveGroup(group).thenApply(v -> group.getNodes());
+                return this.groupManager.saveGroup(group).thenApply(v -> {
+                    this.messagingService.pushUpdate();
+                    return group.getNodes();
+                });
             } else {
                 return CompletableFuture.completedFuture(null);
             }
@@ -178,7 +187,10 @@ public class GroupController implements PermissionHolderController {
             if (opt.isPresent()) {
                 Group group = opt.get();
                 group.data().clear();
-                return this.groupManager.saveGroup(group).thenApply(x -> true);
+                return this.groupManager.saveGroup(group).thenApply(x -> {
+                    this.messagingService.pushUpdate();
+                    return true;
+                });
             } else {
                 return CompletableFuture.completedFuture(false);
             }
@@ -202,7 +214,10 @@ public class GroupController implements PermissionHolderController {
             if (opt.isPresent()) {
                 Group group = opt.get();
                 group.data().add(node);
-                return this.groupManager.saveGroup(group).thenApply(v -> group.getNodes());
+                return this.groupManager.saveGroup(group).thenApply(v -> {
+                    this.messagingService.pushUpdate();
+                    return group.getNodes();
+                });
             } else {
                 return CompletableFuture.completedFuture(null);
             }
@@ -230,7 +245,10 @@ public class GroupController implements PermissionHolderController {
                 for (Node node : nodes) {
                     group.data().add(node);
                 }
-                return this.groupManager.saveGroup(group).thenApply(v -> group.getNodes());
+                return this.groupManager.saveGroup(group).thenApply(v -> {
+                    this.messagingService.pushUpdate();
+                    return group.getNodes();
+                });
             } else {
                 return CompletableFuture.completedFuture(null);
             }
