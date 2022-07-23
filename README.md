@@ -4,6 +4,8 @@
 
 A REST API for LuckPerms.
 
+* [API Documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/LuckPerms/rest-api/main/src/main/resources/luckperms-openapi.yml)
+
 ## Information
 
 * The REST API is bundled as a LuckPerms "[extension](https://luckperms.net/wiki/Extensions)".
