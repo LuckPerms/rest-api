@@ -26,39 +26,59 @@
 package me.lucko.luckperms.extension.rest.bind;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
-import net.luckperms.api.context.ContextSet;
-import net.luckperms.api.node.Node;
-import net.luckperms.api.node.NodeBuilder;
+import net.luckperms.api.actionlog.Action;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.UUID;
 
-public class NodeDeserializer extends JsonDeserializer<Node> {
+public class ActionDeserializer extends JsonDeserializer<Action> {
 
     @Override
-    public Node deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public Action deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         return p.readValueAs(Model.class).to();
     }
 
-    record Model(@JsonProperty(required = true) String key, Boolean value, ContextSet context, Long expiry) {
-        Node to() {
-            NodeBuilder<?, ?> builder = Node.builder(this.key);
-            if (this.value != null) {
-                builder.value(this.value);
-            }
-            if (this.context != null) {
-                builder.context(this.context);
-            }
-            if (this.expiry != null) {
-                builder.expiry(this.expiry);
+    record Model(
+            Long timestamp,
+            @JsonProperty(required = true) SourceModel source,
+            @JsonProperty(required = true) TargetModel target,
+            @JsonProperty(required = true) String description
+    ) {
+        Action to() {
+            long timestamp;
+            if (this.timestamp == null || this.timestamp == 0) {
+                timestamp = System.currentTimeMillis() / 1000L;
+            } else {
+                timestamp = this.timestamp;
             }
 
-            return builder.build();
+            return Action.builder()
+                    .timestamp(Instant.ofEpochSecond(timestamp))
+                    .source(this.source.uniqueId())
+                    .sourceName(this.source.name())
+                    .target(this.target.uniqueId())
+                    .targetName(this.target.name())
+                    .targetType(this.target.type())
+                    .description(this.description)
+                    .build();
         }
     }
+
+    record SourceModel(
+            @JsonProperty(required = true) UUID uniqueId,
+            @JsonProperty(required = true) String name
+    ) { }
+
+    record TargetModel(
+            UUID uniqueId,
+            @JsonProperty(required = true) String name,
+            @JsonProperty(required = true) Action.Target.Type type
+
+    ) { }
 
 }

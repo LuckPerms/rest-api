@@ -16,6 +16,8 @@ tags:
     description: API methods for LuckPerms users.
   - name: Groups
     description: API methods for LuckPerms groups.
+  - name: Actions
+    description: API methods for LuckPerms actions.
 paths:
   /user:
     post:
@@ -796,6 +798,23 @@ paths:
                     contexts:
                       - key: server
                         value: survival
+  /action:
+    post:
+      summary: Submit a new action
+      operationId: submit-action
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Missing required information
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Action'
+      description: Submit a new action to the action logger.
+      tags:
+        - Actions
 components:
   schemas:
     Node:
@@ -1105,11 +1124,73 @@ components:
         - include_nodes_without_world_context
         - apply_inheritance_nodes_without_server_context
         - apply_inheritance_nodes_without_world_context
+    Action:
+      title: Action
+      x-stoplight:
+        id: bsufd88gmrjvi
+      type: object
+      x-examples:
+        example-1:
+          timestamp: 1658428395
+          source:
+            uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+            name: Luck
+          target:
+            uniqueId: 069a79f4-44e9-4726-a5be-fca90e38aaf5
+            name: Notch
+            type: user
+          description: permission set minecraft.command.ban true
+      description: ''
+      properties:
+        timestamp:
+          type: integer
+          description: 'The time when the action happened, defaults to the current time'
+          example: 1658428395
+        source:
+          type: object
+          description: Who performed the action
+          required:
+            - uniqueId
+            - name
+          properties:
+            uniqueId:
+              $ref: '#/components/schemas/UniqueId'
+            name:
+              type: string
+              minLength: 1
+              example: Luck
+        target:
+          type: object
+          description: Who/what was the action performed on
+          required:
+            - name
+            - type
+          properties:
+            uniqueId:
+              $ref: '#/components/schemas/UniqueId'
+            name:
+              type: string
+              example: Luck
+            type:
+              type: string
+              enum:
+                - user
+                - group
+                - track
+        description:
+          type: string
+          minLength: 1
+          example: permission set minecraft.command.ban true
+          description: A description of the action
+      required:
+        - source
+        - target
+        - description
   securitySchemes:
     apikey:
       type: http
       scheme: bearer
-      description: ''
+      description: API Key used to authenticate
   requestBodies: {}
   parameters:
     uniqueId:

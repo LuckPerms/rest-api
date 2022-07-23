@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
+import me.lucko.luckperms.extension.rest.bind.ActionDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetSerializer;
 import me.lucko.luckperms.extension.rest.bind.GroupSerializer;
@@ -39,6 +40,7 @@ import me.lucko.luckperms.extension.rest.bind.NodeSerializer;
 import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
 import me.lucko.luckperms.extension.rest.bind.UserSerializer;
 
+import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.model.group.Group;
@@ -55,6 +57,7 @@ public class CustomObjectMapper extends ObjectMapper {
         this.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         SimpleModule module = new SimpleModule();
+        module.addDeserializer(Action.class, new ActionDeserializer());
         module.addDeserializer(ContextSet.class, new ContextSetDeserializer());
         module.addSerializer(ContextSet.class, new ContextSetSerializer());
         module.addSerializer(Group.class, new GroupSerializer());
