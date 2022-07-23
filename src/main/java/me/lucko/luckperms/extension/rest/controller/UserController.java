@@ -196,7 +196,19 @@ public class UserController implements PermissionHolderController {
     @Override
     public void nodesDeleteAll(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        CompletableFuture<?> future = this.userManager.modifyUser(uniqueId, user -> user.data().clear());
+        List<Node> nodes = ctx.body().isEmpty()
+                ? null
+                : this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
+
+        CompletableFuture<?> future = this.userManager.modifyUser(uniqueId, user -> {
+            if (nodes == null) {
+                user.data().clear();
+            } else {
+                for (Node node : nodes) {
+                    user.data().remove(node);
+                }
+            }
+        });
         ctx.future(future, result -> ctx.result("ok"));
     }
 

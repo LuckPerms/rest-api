@@ -195,13 +195,22 @@ public class GroupController implements PermissionHolderController {
 
     // DELETE /group/{id}/nodes
     @Override
-    public void nodesDeleteAll(Context ctx) {
+    public void nodesDeleteAll(Context ctx) throws JsonProcessingException {
         String name = ctx.pathParam("id");
+        List<Node> nodes = ctx.body().isEmpty()
+                ? null
+                : this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
 
         CompletableFuture<Boolean> future = this.groupManager.loadGroup(name).thenCompose(opt -> {
             if (opt.isPresent()) {
                 Group group = opt.get();
-                group.data().clear();
+                if (nodes == null) {
+                    group.data().clear();
+                } else {
+                    for (Node node : nodes) {
+                        group.data().remove(node);
+                    }
+                }
                 return this.groupManager.saveGroup(group).thenApply(x -> {
                     this.messagingService.pushUpdate();
                     return true;

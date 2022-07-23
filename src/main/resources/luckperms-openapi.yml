@@ -376,16 +376,36 @@ paths:
       tags:
         - Users
     delete:
-      summary: Remove all nodes from a user
+      summary: Remove nodes from a user
       operationId: clear-user-nodes
       responses:
         '200':
           description: OK
         '404':
           description: User doesn't exist
-      description: Delete all of the users nodes
+      description: Delete some or all of the nodes from a user.
       tags:
         - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  - key: minecraft.command.ban
+                    value: true
+                    context:
+                      - key: server
+                        value: survival
+                    expiry: 1658428395
+        description: |-
+          Specify the nodes to be deleted.
+
+          If the request body is empty, all nodes will be deleted.
   '/user/{uniqueId}/meta':
     parameters:
       - $ref: '#/components/parameters/uniqueId'
@@ -893,16 +913,39 @@ paths:
       tags:
         - Groups
     delete:
-      summary: Remove all nodes from a group
+      summary: Remove nodes from a group
       operationId: clear-group-nodes
       responses:
         '200':
           description: OK
         '404':
           description: Group doesn't exist
-      description: Delete all of the groups nodes
+      description: |-
+        Delete some or all of the nodes from a group.
+
+        If the request body is empty, all nodes will be deleted.
       tags:
         - Groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  - key: minecraft.command.ban
+                    value: true
+                    context:
+                      - key: server
+                        value: survival
+                    expiry: 1658428395
+        description: |-
+          Specify the nodes to be deleted.
+
+          If the request body is empty, all nodes will be deleted.
   '/group/{name}/meta':
     parameters:
       - $ref: '#/components/parameters/name'
