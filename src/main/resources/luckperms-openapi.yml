@@ -20,6 +20,26 @@ tags:
     description: API methods for LuckPerms actions.
 paths:
   /user:
+    get:
+      summary: Get all existing users
+      operationId: get-users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/UniqueId'
+              examples:
+                example-1:
+                  value:
+                    - c1d60c50-70b5-4722-8057-87767557e50d
+      description: Returns an array of all known users.
+      tags:
+        - Users
     post:
       summary: Create a new user
       operationId: create-user
@@ -58,26 +78,6 @@ paths:
                   username: Luck
         description: ''
       description: Create a new user.
-      tags:
-        - Users
-    get:
-      summary: Get all existing users
-      operationId: get-users
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                type: array
-                uniqueItems: true
-                items:
-                  $ref: '#/components/schemas/UniqueId'
-              examples:
-                example-1:
-                  value:
-                    - c1d60c50-70b5-4722-8057-87767557e50d
-      description: Returns an array of all known users.
       tags:
         - Users
   '/user/{uniqueId}':
@@ -195,6 +195,47 @@ paths:
       operationId: get-user-nodes
       parameters: []
       description: Get a users nodes.
+    post:
+      summary: Add a node to a user
+      operationId: add-user-node
+      responses:
+        '200':
+          description: Ok - returns the updated nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: Add a single node to the user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  key: minecraft.command.ban
+                  value: true
+                  context:
+                    - key: server
+                      value: survival
+                  expiry: 1658428395
+      tags:
+        - Users
     patch:
       summary: Add multiple nodes to a user
       operationId: add-user-nodes
@@ -239,60 +280,8 @@ paths:
         description: ''
       tags:
         - Users
-    delete:
-      summary: Remove all nodes from a user
-      operationId: clear-user-nodes
-      responses:
-        '200':
-          description: OK
-        '404':
-          description: User doesn't exist
-      description: Delete all of the users nodes
-      tags:
-        - Users
-    post:
-      summary: Add a new node to a user
-      operationId: add-user-node
-      responses:
-        '200':
-          description: Ok - returns the updated nodes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NodeMap'
-              examples:
-                example-1:
-                  value:
-                    - key: minecraft.command.ban
-                      type: permission
-                      value: true
-                      context:
-                        - key: server
-                          value: survival
-                      expiry: 1658428395
-        '400':
-          description: Missing required information
-        '404':
-          description: User doesn't exist
-      description: Add a single node to the user
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewNode'
-            examples:
-              example-1:
-                value:
-                  key: minecraft.command.ban
-                  value: true
-                  context:
-                    - key: server
-                      value: survival
-                  expiry: 1658428395
-      tags:
-        - Users
     put:
-      summary: Set a users nodes
+      summary: Replace (set) a users nodes
       operationId: set-user-nodes
       responses:
         '200':
@@ -318,6 +307,17 @@ paths:
                       - key: server
                         value: survival
                     expiry: 1658428395
+      tags:
+        - Users
+    delete:
+      summary: Remove all nodes from a user
+      operationId: clear-user-nodes
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: User doesn't exist
+      description: Delete all of the users nodes
       tags:
         - Users
   '/user/{uniqueId}/meta':
@@ -388,7 +388,7 @@ paths:
           description: The permission to check for
           required: true
     post:
-      summary: Run a permission check against a user
+      summary: Run a permission check against a user with custom query options
       operationId: post-user-permission-check
       tags:
         - Users
@@ -415,7 +415,7 @@ paths:
           description: Missing required information
         '404':
           description: User doesn't exist
-      description: Run a permission check against a user with query options
+      description: Run a permission check against a user with custom query options
       requestBody:
         content:
           application/json:
@@ -430,6 +430,26 @@ paths:
                       - key: server
                         value: survival
   /group:
+    get:
+      summary: Get all existing groups
+      operationId: get-groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/Name'
+              examples:
+                example-1:
+                  value:
+                    - admin
+      description: Get all known groups
+      tags:
+        - Groups
     post:
       summary: Create a new group
       operationId: create-group
@@ -461,26 +481,6 @@ paths:
                   name: admin
         description: ''
       description: Create a new group.
-      tags:
-        - Groups
-    get:
-      summary: Get all existing groups
-      operationId: get-groups
-      responses:
-        '200':
-          description: Ok
-          content:
-            application/json:
-              schema:
-                type: array
-                uniqueItems: true
-                items:
-                  $ref: '#/components/schemas/Name'
-              examples:
-                example-1:
-                  value:
-                    - admin
-      description: Get all known groups
       tags:
         - Groups
   '/group/{name}':
@@ -564,6 +564,47 @@ paths:
       operationId: get-group-nodes
       parameters: []
       description: Get a groups nodes.
+    post:
+      summary: Add a node to a group
+      operationId: add-group-node
+      responses:
+        '200':
+          description: Ok - returns the updated nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
+        '400':
+          description: Missing required information
+        '404':
+          description: Group doesn't exist
+      description: Add a single node to the group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  key: minecraft.command.ban
+                  value: true
+                  context:
+                    - key: server
+                      value: survival
+                  expiry: 1658428395
+      tags:
+        - Groups
     patch:
       summary: Add multiple Group Nodes
       operationId: add-group-nodes
@@ -608,60 +649,8 @@ paths:
         description: ''
       tags:
         - Groups
-    delete:
-      summary: Remove all nodes from a group
-      operationId: clear-group-nodes
-      responses:
-        '200':
-          description: OK
-        '404':
-          description: Group doesn't exist
-      description: Delete all of the groups nodes
-      tags:
-        - Groups
-    post:
-      summary: Add a new node to a group
-      operationId: add-group-node
-      responses:
-        '200':
-          description: Ok - returns the updated nodes
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NodeMap'
-              examples:
-                example-1:
-                  value:
-                    - key: minecraft.command.ban
-                      type: permission
-                      value: true
-                      context:
-                        - key: server
-                          value: survival
-                      expiry: 1658428395
-        '400':
-          description: Missing required information
-        '404':
-          description: Group doesn't exist
-      description: Add a single node to the group
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NewNode'
-            examples:
-              example-1:
-                value:
-                  key: minecraft.command.ban
-                  value: true
-                  context:
-                    - key: server
-                      value: survival
-                  expiry: 1658428395
-      tags:
-        - Groups
     put:
-      summary: Set a groups nodes
+      summary: Replace (set) a groups nodes
       operationId: set-group-nodes
       responses:
         '200':
@@ -687,6 +676,17 @@ paths:
                       - key: server
                         value: survival
                     expiry: 1658428395
+      tags:
+        - Groups
+    delete:
+      summary: Remove all nodes from a group
+      operationId: clear-group-nodes
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Group doesn't exist
+      description: Delete all of the groups nodes
       tags:
         - Groups
   '/group/{name}/meta':
@@ -757,7 +757,7 @@ paths:
           description: The permission to check for
           required: true
     post:
-      summary: Run a permission check against a group
+      summary: Run a permission check against a group with custom query options
       operationId: post-group-permission-check
       tags:
         - Groups
@@ -784,7 +784,7 @@ paths:
           description: Missing required information
         '404':
           description: Group doesn't exist
-      description: Run a permission check against a group with query options
+      description: Run a permission check against a group with custom query options
       requestBody:
         content:
           application/json:
