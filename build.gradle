@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'org.cadixdev.licenser' version '0.6.1'
+}
+
+group 'me.lucko.luckperms'
+version '1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+license {
+    header = file('HEADER.txt')
+    include '**/*.java'
+    newLine = true
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.slf4j:slf4j-api:1.7.36'
+    compileOnly 'net.luckperms:api:5.4'
+    implementation 'io.javalin:javalin:4.6.4'
+    implementation 'io.javalin:javalin-openapi:4.6.4'
+}
+
+shadowJar {
+    archiveFileName = "luckperms-rest-api-v1.jar"
+}
+
+artifacts {
+    archives shadowJar
+}

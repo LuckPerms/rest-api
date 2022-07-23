@@ -1,0 +1,980 @@
+openapi: 3.0.0
+info:
+  title: LuckPerms REST API
+  description: The LuckPerms REST API allows developers to query LuckPerms data using HTTP calls.
+  version: '1.0'
+  contact:
+    name: LuckPerms Team
+    url: 'https://luckperms.net'
+  license:
+    name: MIT
+    url: 'https://github.com/LuckPerms/LuckPerms/blob/master/LICENSE.txt'
+servers:
+  - url: '../'
+tags:
+  - name: Users
+    description: API methods for LuckPerms users.
+  - name: Groups
+    description: API methods for LuckPerms groups.
+paths:
+  /user:
+    post:
+      summary: Create a new user
+      operationId: create-user
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                example-1:
+                  value:
+                    uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+                    username: Luck
+                    nodes:
+                      - key: minecraft.command.ban
+                        type: permission
+                        value: true
+                        context:
+                          - key: server
+                            value: survival
+                        expiry: 1658428395
+                    metadata:
+                      meta:
+                        nametag-color: red
+                        fly-speed: '5'
+                      prefix: '[Admin] '
+                      suffix: ' [the great]'
+                      primaryGroup: default
+        '400':
+          description: Missing required information
+        '409':
+          description: User already exists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+            examples: {}
+        description: ''
+      description: Create a new user.
+      tags:
+        - Users
+    get:
+      summary: Get all existing users
+      operationId: get-users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/UniqueId'
+              examples:
+                example-1:
+                  value:
+                    - c1d60c50-70b5-4722-8057-87767557e50d
+      description: Returns an array of all known users.
+      tags:
+        - Users
+  '/user/{uniqueId}':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    get:
+      summary: Get a users data
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                example-1:
+                  value:
+                    uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+                    username: Luck
+                    nodes:
+                      - key: minecraft.command.ban
+                        type: permission
+                        value: true
+                        context:
+                          - key: server
+                            value: survival
+                        expiry: 1658428395
+                    metadata:
+                      meta:
+                        nametag-color: red
+                        fly-speed: '5'
+                      prefix: '[Admin] '
+                      suffix: ' [the great]'
+                      primaryGroup: default
+        '404':
+          description: User doesn't exist
+      operationId: get-user
+      parameters:
+        - $ref: '#/components/parameters/uniqueId'
+      description: Get a user by unique id (UUID).
+    patch:
+      summary: Update a users data
+      operationId: patch-user
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: Update a user's data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - properties:
+                    username:
+                      type: string
+                      minLength: 1
+                      example: Luck
+              type: object
+        description: ''
+      tags:
+        - Users
+    delete:
+      summary: Delete a user
+      operationId: delete-user
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: User doesn't exist
+      description: Delete a user
+      tags:
+        - Users
+  '/user/{uniqueId}/nodes':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    get:
+      summary: Get a users nodes (permissions data)
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+              examples: {}
+        '404':
+          description: User doesn't exist
+      operationId: get-user-nodes
+      parameters: []
+      description: Get a users nodes.
+    patch:
+      summary: Add multiple nodes to a user
+      operationId: add-user-nodes
+      responses:
+        '200':
+          description: Ok - returns the updated nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: Add multiple nodes to the user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewNode'
+        description: ''
+      tags:
+        - Users
+    delete:
+      summary: Remove all nodes from a user
+      operationId: clear-user-nodes
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: User doesn't exist
+      description: Delete all of the users nodes
+      tags:
+        - Users
+    post:
+      summary: Add a new node to a user
+      operationId: add-user-node
+      responses:
+        '200':
+          description: Ok - returns the updated nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: Add a single node to the user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewNode'
+      tags:
+        - Users
+    put:
+      summary: Set a users nodes
+      operationId: set-user-nodes
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: Override the users nodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewNode'
+      tags:
+        - Users
+  '/user/{uniqueId}/meta':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    get:
+      summary: Get a users metadata
+      tags:
+        - Users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+              examples:
+                example-1:
+                  value:
+                    meta:
+                      nametag-color: red
+                      fly-speed: '5'
+                    prefix: '[Admin] '
+                    suffix: ' [the great]'
+                    primaryGroup: default
+        '404':
+          description: User doesn't exist
+      operationId: get-user-uniqueId-meta
+      description: Get a users metadata
+  '/user/{uniqueId}/permissionCheck':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    get:
+      summary: Run a permission check against a user
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionCheckResult'
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      operationId: get-user-permission-check
+      description: Run a permission check against a user
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: permission
+          description: The permission to check for
+          required: true
+    post:
+      summary: Run a permission check against a user
+      operationId: post-user-permission-check
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionCheckResult'
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: Run a permission check against a user with query options
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCheckRequest'
+            examples:
+              example-1:
+                value:
+                  permission: minecraft.command.ban
+                  queryOptions:
+                    contexts:
+                      - key: server
+                        value: survival
+  /group:
+    post:
+      summary: Create a new group
+      operationId: create-group
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                example-1:
+                  value:
+                    name: admin
+                    displayName: Admin
+                    weight: 0
+                    nodes:
+                      - key: minecraft.command.ban
+                        type: permission
+                        value: true
+                        context:
+                          - key: server
+                            value: survival
+                        expiry: 1658428395
+                    metadata:
+                      meta:
+                        nametag-color: red
+                        fly-speed: '5'
+                      prefix: '[Admin] '
+                      suffix: ' [the great]'
+                      primaryGroup: default
+        '400':
+          description: Missing required information
+        '409':
+          description: Group already exists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewGroup'
+            examples: {}
+        description: ''
+      description: Create a new group.
+      tags:
+        - Groups
+    get:
+      summary: Get all existing groups
+      operationId: get-groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/Name'
+              examples:
+                example-1:
+                  value:
+                    - admin
+      description: Get all known groups
+      tags:
+        - Groups
+  '/group/{name}':
+    parameters:
+      - $ref: '#/components/parameters/name'
+    get:
+      summary: Get a groups data
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                example-1:
+                  value:
+                    name: admin
+                    displayName: Admin
+                    weight: 0
+                    nodes:
+                      - key: minecraft.command.ban
+                        type: permission
+                        value: true
+                        context:
+                          - key: server
+                            value: survival
+                        expiry: 1658428395
+                    metadata:
+                      meta:
+                        nametag-color: red
+                        fly-speed: '5'
+                      prefix: '[Admin] '
+                      suffix: ' [the great]'
+                      primaryGroup: default
+        '404':
+          description: Group doesn't exist
+      operationId: get-group
+      parameters:
+        - $ref: '#/components/parameters/name'
+      description: Get a group
+    delete:
+      summary: Delete a group
+      operationId: delete-group
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Group doesn't exist
+      description: Delete a group
+      tags:
+        - Groups
+  '/group/{name}/nodes':
+    parameters:
+      - $ref: '#/components/parameters/name'
+    get:
+      summary: Get a groups nodes (permissions data)
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+        '404':
+          description: Group doesn't exist
+      operationId: get-group-nodes
+      parameters: []
+      description: Get a groups nodes.
+    patch:
+      summary: Add multiple Group Nodes
+      operationId: add-group-nodes
+      responses:
+        '200':
+          description: Ok - returns the updated nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+        '400':
+          description: Missing required information
+        '404':
+          description: Group doesn't exist
+      description: Add multiple nodes to the group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewNode'
+        description: ''
+      tags:
+        - Groups
+    delete:
+      summary: Remove all nodes from a group
+      operationId: clear-group-nodes
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Group doesn't exist
+      description: Delete all of the groups nodes
+      tags:
+        - Groups
+    post:
+      summary: Add a new node to a group
+      operationId: add-group-node
+      responses:
+        '200':
+          description: Ok - returns the updated nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeMap'
+        '400':
+          description: Missing required information
+        '404':
+          description: Group doesn't exist
+      description: Add a single node to the group
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewNode'
+      tags:
+        - Groups
+    put:
+      summary: Set a groups nodes
+      operationId: set-group-nodes
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Missing required information
+        '404':
+          description: Group doesn't exist
+      description: Override the groups nodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewNode'
+      tags:
+        - Groups
+  '/group/{name}/meta':
+    parameters:
+      - $ref: '#/components/parameters/name'
+    get:
+      summary: Get a groups metadata
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+              examples:
+                example-1:
+                  value:
+                    meta:
+                      nametag-color: red
+                      fly-speed: '5'
+                    prefix: '[Admin] '
+                    suffix: ' [the great]'
+                    primaryGroup: default
+        '404':
+          description: Group doesn't exist
+      operationId: get-group-name-meta
+      description: Get the groups metadata
+  '/group/{name}/permissionCheck':
+    parameters:
+      - $ref: '#/components/parameters/name'
+    get:
+      summary: Run a permission check against a group
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionCheckResult'
+        '400':
+          description: Missing required information
+        '404':
+          description: Group doesn't exist
+      operationId: get-group-permission-check
+      description: Run a permission check against a group
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: permission
+          description: The permission to check for
+          required: true
+    post:
+      summary: Run a permission check against a group
+      operationId: post-group-permission-check
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionCheckResult'
+        '400':
+          description: Missing required information
+        '404':
+          description: Group doesn't exist
+      description: Run a permission check against a group with query options
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionCheckRequest'
+            examples:
+              example-1:
+                value:
+                  permission: minecraft.command.ban
+                  queryOptions:
+                    contexts:
+                      - key: server
+                        value: survival
+components:
+  schemas:
+    Node:
+      type: object
+      description: |-
+        Represents a LuckPerms "node".
+
+        Nodes encapsulate more than just permission assignments. Nodes are used to store data about inherited groups, as well as assigned prefixes, suffixes and meta values.
+      title: ''
+      properties:
+        key:
+          type: string
+          minLength: 1
+          example: minecraft.command.ban
+        type:
+          type: string
+          enum:
+            - permission
+            - regex_permission
+            - inheritance
+            - prefix
+            - suffix
+            - meta
+            - weight
+            - display_name
+        value:
+          type: boolean
+          default: true
+        context:
+          $ref: '#/components/schemas/ContextSet'
+        expiry:
+          type: integer
+          example: 1658428395
+      required:
+        - key
+        - type
+        - value
+        - context
+    NewNode:
+      type: object
+      x-examples:
+        example-1:
+          key: example.node
+          type: permission
+          value: true
+          context: {}
+          expiry: 1000000
+      description: |-
+        Represents a LuckPerms "node".
+
+        Nodes encapsulate more than just permission assignments. Nodes are used to store data about inherited groups, as well as assigned prefixes, suffixes and meta values.
+      properties:
+        key:
+          type: string
+          minLength: 1
+          example: minecraft.command.ban
+        value:
+          type: boolean
+          default: true
+        context:
+          $ref: '#/components/schemas/ContextSet'
+        expiry:
+          type: integer
+          example: 1658428395
+      required:
+        - key
+    Context:
+      type: object
+      x-examples:
+        example-1:
+          key: server
+          value: survival
+      properties:
+        key:
+          type: string
+          minLength: 1
+          example: server
+          pattern: '^[a-z0-9]+$'
+        value:
+          type: string
+          minLength: 1
+          example: survival
+          pattern: '^[a-z0-9]+$'
+      required:
+        - key
+        - value
+      description: A context pair.
+    ContextSet:
+      title: ContextSet
+      x-stoplight:
+        id: x6gu6czcagtng
+      type: array
+      items:
+        $ref: '#/components/schemas/Context'
+      description: A set of context pairs.
+      x-examples: {}
+    Group:
+      title: Group
+      x-stoplight:
+        id: 4xch4cn4mxc3u
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        displayName:
+          type: string
+          minLength: 1
+          example: Admin
+        weight:
+          type: integer
+        nodes:
+          $ref: '#/components/schemas/NodeMap'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+      required:
+        - name
+        - nodes
+        - metadata
+    NewGroup:
+      title: NewGroup
+      x-stoplight:
+        id: 4xch4cn4mxc3u
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+      required:
+        - name
+    User:
+      title: User
+      x-stoplight:
+        id: 4xch4cn4mxc3u
+      type: object
+      properties:
+        uniqueId:
+          $ref: '#/components/schemas/UniqueId'
+        username:
+          type: string
+          minLength: 1
+          example: Luck
+        parentGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/Name'
+        nodes:
+          $ref: '#/components/schemas/NodeMap'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+      required:
+        - uniqueId
+        - nodes
+        - metadata
+    NewUser:
+      title: NewUser
+      x-stoplight:
+        id: 4xch4cn4mxc3u
+      type: object
+      properties:
+        uniqueId:
+          $ref: '#/components/schemas/UniqueId'
+        username:
+          type: string
+          minLength: 1
+          example: Luck
+      required:
+        - uniqueId
+    NodeMap:
+      title: NodeMap
+      x-stoplight:
+        id: dlrdoescpnbhh
+      type: array
+      items:
+        $ref: '#/components/schemas/Node'
+      description: A map (array) of nodes.
+    Metadata:
+      title: Metadata
+      x-stoplight:
+        id: jweo4hdxmecgn
+      type: object
+      properties:
+        meta:
+          type: object
+        prefix:
+          type: string
+          example: '[Admin] '
+        suffix:
+          type: string
+          example: ' [the great]'
+        primaryGroup:
+          type: string
+          example: default
+          minLength: 1
+      required:
+        - meta
+      x-examples:
+        example-1:
+          meta:
+            nametag-color: red
+            fly-speed: '5'
+          prefix: '[Admin] '
+          suffix: ' [the great]'
+          primaryGroup: default
+      description: Metadata about a user or group.
+    UniqueId:
+      type: string
+      title: Unique Id
+      x-stoplight:
+        id: 1juihei0xo8qa
+      description: A player unique id (UUID)
+      example: c1d60c50-70b5-4722-8057-87767557e50d
+      format: uuid
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    Name:
+      type: string
+      title: Name
+      description: A group name
+      example: admin
+      pattern: '^[a-z0-9]+$'
+      minLength: 1
+    PermissionCheckResult:
+      title: PermissionCheckResult
+      x-stoplight:
+        id: ht61bwitr05b6
+      type: object
+      properties:
+        result:
+          type: string
+          enum:
+            - 'true'
+            - 'false'
+            - undefined
+          example: 'true'
+        node:
+          $ref: '#/components/schemas/Node'
+      required:
+        - result
+      description: The result returned after running a permission check.
+    PermissionCheckRequest:
+      title: PermissionCheckRequest
+      x-stoplight:
+        id: ht61bwitr05b6
+      type: object
+      description: The request parameters for a permission check.
+      properties:
+        permission:
+          type: string
+          example: minecraft.command.ban
+          minLength: 1
+          description: The permission to check for
+        queryOptions:
+          $ref: '#/components/schemas/QueryOptions'
+      required:
+        - permission
+      x-examples:
+        example-1:
+          permission: minecraft.command.ban
+          queryOptions:
+            contexts:
+              - key: server
+                value: survival
+        example-2:
+          permission: minecraft.command.ban
+          queryOptions:
+            mode: contextual
+            flags:
+              - resolve_inheritance
+              - include_nodes_without_server_context
+              - include_nodes_without_world_context
+              - apply_inheritance_nodes_without_server_context
+              - apply_inheritance_nodes_without_world_context
+            contexts:
+              - key: server
+                value: survival
+    QueryOptions:
+      title: QueryOptions
+      x-stoplight:
+        id: xwwcq7jm3sfhn
+      type: object
+      properties:
+        mode:
+          type: string
+          default: contextual
+          enum:
+            - contextual
+            - non_contextual
+        flags:
+          $ref: '#/components/schemas/QueryFlags'
+        contexts:
+          $ref: '#/components/schemas/ContextSet'
+    QueryFlags:
+      title: QueryFlags
+      x-stoplight:
+        id: stooif1ezfxv1
+      type: array
+      items:
+        type: string
+        enum:
+          - resolve_inheritance
+          - include_nodes_without_server_context
+          - include_nodes_without_world_context
+          - apply_inheritance_nodes_without_server_context
+          - apply_inheritance_nodes_without_world_context
+      default:
+        - resolve_inheritance
+        - include_nodes_without_server_context
+        - include_nodes_without_world_context
+        - apply_inheritance_nodes_without_server_context
+        - apply_inheritance_nodes_without_world_context
+  securitySchemes:
+    apikey:
+      type: http
+      scheme: bearer
+      description: ''
+  requestBodies: {}
+  parameters:
+    uniqueId:
+      name: uniqueId
+      in: path
+      schema:
+        type: string
+        format: uuid
+        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        example: c1d60c50-70b5-4722-8057-87767557e50d
+      required: true
+      description: A player unique id (UUID)
+    name:
+      name: name
+      in: path
+      schema:
+        type: string
+        example: admin
+        pattern: '^[a-z0-9]+$'
+        minLength: 1
+      required: true
+      description: A group name
+security:
+  - apikey: []
