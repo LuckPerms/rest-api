@@ -30,8 +30,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import me.lucko.luckperms.extension.rest.model.GroupSearchResult;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
+import me.lucko.luckperms.extension.rest.model.SearchRequest;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.messaging.MessagingService;
@@ -39,6 +41,7 @@ import net.luckperms.api.model.PermissionHolder;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.group.GroupManager;
 import net.luckperms.api.node.Node;
+import net.luckperms.api.node.matcher.NodeMatcher;
 import net.luckperms.api.query.QueryOptions;
 
 import io.javalin.http.Context;
@@ -84,6 +87,18 @@ public class GroupController implements PermissionHolderController {
                         .map(Group::getName)
                         .collect(Collectors.toList()
                         )
+                );
+        ctx.future(future);
+    }
+
+    // GET /group/search
+    @Override
+    public void search(Context ctx) throws Exception {
+        NodeMatcher<? extends Node> matcher = SearchRequest.parse(ctx);
+        CompletableFuture<List<GroupSearchResult>> future = this.groupManager.<Node>searchAll(matcher)
+                .thenApply(map -> map.entrySet().stream()
+                        .map(e -> new GroupSearchResult(e.getKey(), e.getValue()))
+                        .toList()
                 );
         ctx.future(future);
     }

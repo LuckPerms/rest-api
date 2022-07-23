@@ -138,6 +138,8 @@ public class RestServer implements AutoCloseable {
         post(controller::create);
         get(controller::getAll);
 
+        get("search", controller::search);
+
         path("{id}", () -> {
             get(controller::get);
             patch(controller::update);

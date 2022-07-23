@@ -35,6 +35,9 @@ public interface PermissionHolderController {
     // GET /<type>
     void getAll(Context ctx) throws Exception;
 
+    // GET /<type>/search
+    void search(Context ctx) throws Exception;
+
     // GET /<type>/{id}
     void get(Context ctx) throws Exception;
 

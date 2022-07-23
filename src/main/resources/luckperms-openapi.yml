@@ -81,6 +81,69 @@ paths:
       description: Create a new user.
       tags:
         - Users
+  /user/search:
+    get:
+      summary: Search for users with given nodes
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSearchResult'
+              examples:
+                example-1:
+                  value:
+                    - uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+                      results:
+                        - key: minecraft.command.ban
+                          type: permission
+                          value: true
+                          context:
+                            - key: server
+                              value: survival
+                          expiry: 1658428395
+      operationId: get-user-search
+      description: |-
+        Search for users with given nodes.
+
+        You must specify one of the query parameters in the request.
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: key
+          description: Search for nodes with a key equal to
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: keyStartsWith
+          description: Search for nodes with a key starting with
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: metaKey
+          description: Search for meta nodes with a meta key equal to
+        - schema:
+            type: string
+            enum:
+              - regex_permission
+              - inheritance
+              - prefix
+              - suffix
+              - meta
+              - weight
+              - display_name
+          in: query
+          name: type
+          description: Search for nodes with a type equal to
   '/user/{uniqueId}':
     parameters:
       - $ref: '#/components/parameters/uniqueId'
@@ -571,6 +634,69 @@ paths:
       description: Create a new group.
       tags:
         - Groups
+  /group/search:
+    get:
+      summary: Search for groups with given nodes
+      tags:
+        - Groups
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupSearchResult'
+              examples:
+                example-1:
+                  value:
+                    - name: admin
+                      results:
+                        - key: minecraft.command.ban
+                          type: permission
+                          value: true
+                          context:
+                            - key: server
+                              value: survival
+                          expiry: 1658428395
+      operationId: get-group-search
+      description: |-
+        Search for groups with given nodes.
+
+        You must specify one of the query parameters in the request.
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: key
+          description: Search for nodes with a key equal to
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: keyStartsWith
+          description: Search for nodes with a key starting with
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: metaKey
+          description: Search for meta nodes with a meta key equal to
+        - schema:
+            type: string
+            enum:
+              - regex_permission
+              - inheritance
+              - prefix
+              - suffix
+              - meta
+              - weight
+              - display_name
+          in: query
+          name: type
+          description: Search for nodes with a type equal to
   '/group/{name}':
     parameters:
       - $ref: '#/components/parameters/name'
@@ -1350,6 +1476,24 @@ components:
         example-1:
           track: staff
       description: A request to promote or demote a user along a track.
+    UserSearchResult:
+      title: UserSearchResult
+      type: object
+      properties:
+        uniqueId:
+          $ref: '#/components/schemas/UniqueId'
+        results:
+          $ref: '#/components/schemas/NodeMap'
+      description: ''
+    GroupSearchResult:
+      title: GroupSearchResult
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/Name'
+        results:
+          $ref: '#/components/schemas/NodeMap'
+      description: ''
   securitySchemes:
     apikey:
       type: http

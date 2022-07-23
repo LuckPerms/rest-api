@@ -32,7 +32,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
+import me.lucko.luckperms.extension.rest.model.SearchRequest;
 import me.lucko.luckperms.extension.rest.model.TrackRequest;
+import me.lucko.luckperms.extension.rest.model.UserSearchResult;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;
@@ -43,6 +45,7 @@ import net.luckperms.api.model.PlayerSaveResult;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
 import net.luckperms.api.node.Node;
+import net.luckperms.api.node.matcher.NodeMatcher;
 import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.DemotionResult;
 import net.luckperms.api.track.PromotionResult;
@@ -105,6 +108,18 @@ public class UserController implements PermissionHolderController {
     @Override
     public void getAll(Context ctx) {
         CompletableFuture<Set<UUID>> future = this.userManager.getUniqueUsers();
+        ctx.future(future);
+    }
+
+    // GET /user/search
+    @Override
+    public void search(Context ctx) throws Exception {
+        NodeMatcher<? extends Node> matcher = SearchRequest.parse(ctx);
+        CompletableFuture<List<UserSearchResult>> future = this.userManager.<Node>searchAll(matcher)
+                .thenApply(map -> map.entrySet().stream()
+                        .map(e -> new UserSearchResult(e.getKey(), e.getValue()))
+                        .toList()
+                );
         ctx.future(future);
     }
 
