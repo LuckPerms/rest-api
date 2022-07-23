@@ -68,4 +68,10 @@ public interface PermissionHolderController {
     // POST /<type>/{id}/permissionCheck
     void permissionCheckCustom(Context ctx) throws Exception;
 
+    // POST /<type>/{id}/promote
+    void promote(Context ctx) throws Exception;
+
+    // POST /<type>/{id}/demote
+    void demote(Context ctx) throws Exception;
+
 }

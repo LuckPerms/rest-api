@@ -59,6 +59,7 @@ paths:
                       - key: group.default
                         type: inheritance
                         value: true
+                        context: []
                     metadata:
                       meta: {}
                       primaryGroup: default
@@ -103,6 +104,7 @@ paths:
                       - key: group.default
                         type: inheritance
                         value: true
+                        context: []
                       - key: minecraft.command.ban
                         type: permission
                         value: true
@@ -183,6 +185,7 @@ paths:
                     - key: group.default
                       type: inheritance
                       value: true
+                      context: []
                     - key: minecraft.command.ban
                       type: permission
                       value: true
@@ -429,6 +432,90 @@ paths:
                     contexts:
                       - key: server
                         value: survival
+  '/user/{uniqueId}/promote':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    post:
+      summary: Promote a user along a track
+      operationId: user-promote
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionResult'
+              examples:
+                example-1:
+                  value:
+                    success: true
+                    status: success
+                    groupFrom: mvp
+                    groupTo: vip
+        '400':
+          description: Missing required information
+        '404':
+          description: User or track doesn't exist
+      description: Promote a user along a track
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackRequest'
+            examples:
+              example-1:
+                value:
+                  track: staff
+              example-2:
+                value:
+                  track: staff
+                  context:
+                    - key: server
+                      value: survival
+  '/user/{uniqueId}/demote':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    post:
+      summary: Demote a user along a track
+      operationId: user-demote
+      tags:
+        - Users
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemotionResult'
+              examples:
+                example-1:
+                  value:
+                    success: true
+                    status: success
+                    groupFrom: vip
+                    groupTo: mvp
+        '400':
+          description: Missing required information
+        '404':
+          description: User or track doesn't exist
+      description: Demote a user along a track
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackRequest'
+            examples:
+              example-1:
+                value:
+                  track: staff
+              example-2:
+                value:
+                  track: staff
+                  context:
+                    - key: server
+                      value: survival
   /group:
     get:
       summary: Get all existing groups
@@ -465,7 +552,8 @@ paths:
                   value:
                     name: admin
                     nodes: []
-                    metadata: {}
+                    metadata:
+                      meta: {}
         '400':
           description: Missing required information
         '409':
@@ -1186,6 +1274,82 @@ components:
         - source
         - target
         - description
+    PromotionResult:
+      title: PromotionResult
+      x-stoplight:
+        id: caj1zmymehuk1
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          enum:
+            - success
+            - added_to_first_group
+            - malformed_track
+            - end_of_track
+            - ambiguous_call
+            - undefined_failure
+          example: success
+        groupFrom:
+          type: string
+          minLength: 1
+          example: mvp
+        groupTo:
+          type: string
+          minLength: 1
+          example: vip
+      required:
+        - success
+        - status
+      description: The result of promoting a user.
+    DemotionResult:
+      title: DemotionResult
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: string
+          enum:
+            - success
+            - removed_from_first_group
+            - malformed_track
+            - not_on_track
+            - ambiguous_call
+            - undefined_failure
+          example: success
+        groupFrom:
+          type: string
+          minLength: 1
+          example: vip
+        groupTo:
+          type: string
+          minLength: 1
+          example: mvp
+      required:
+        - success
+        - status
+      description: The result of demoting a user.
+    TrackRequest:
+      title: TrackRequest
+      x-stoplight:
+        id: 73y5bg63c2m3y
+      type: object
+      properties:
+        track:
+          type: string
+          example: staff
+          minLength: 1
+        context:
+          $ref: '#/components/schemas/ContextSet'
+      required:
+        - track
+      x-examples:
+        example-1:
+          track: staff
+      description: A request to promote or demote a user along a track.
   securitySchemes:
     apikey:
       type: http

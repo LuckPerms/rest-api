@@ -33,10 +33,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import me.lucko.luckperms.extension.rest.bind.ActionDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetSerializer;
+import me.lucko.luckperms.extension.rest.bind.DemotionResultSerializer;
 import me.lucko.luckperms.extension.rest.bind.GroupSerializer;
 import me.lucko.luckperms.extension.rest.bind.MetadataSerializer;
 import me.lucko.luckperms.extension.rest.bind.NodeDeserializer;
 import me.lucko.luckperms.extension.rest.bind.NodeSerializer;
+import me.lucko.luckperms.extension.rest.bind.PromotionResultSerializer;
 import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
 import me.lucko.luckperms.extension.rest.bind.UserSerializer;
 
@@ -47,6 +49,8 @@ import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.track.DemotionResult;
+import net.luckperms.api.track.PromotionResult;
 
 public class CustomObjectMapper extends ObjectMapper {
 
@@ -60,10 +64,12 @@ public class CustomObjectMapper extends ObjectMapper {
         module.addDeserializer(Action.class, new ActionDeserializer());
         module.addDeserializer(ContextSet.class, new ContextSetDeserializer());
         module.addSerializer(ContextSet.class, new ContextSetSerializer());
+        module.addSerializer(DemotionResult.class, new DemotionResultSerializer());
         module.addSerializer(Group.class, new GroupSerializer());
         module.addSerializer(CachedMetaData.class, new MetadataSerializer());
         module.addDeserializer(Node.class, new NodeDeserializer());
         module.addSerializer(Node.class, new NodeSerializer());
+        module.addSerializer(PromotionResult.class, new PromotionResultSerializer());
         module.addDeserializer(QueryOptions.class, new QueryOptionsDeserializer());
         module.addSerializer(User.class, new UserSerializer());
         this.registerModule(module);

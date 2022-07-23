@@ -108,6 +108,7 @@ public class RestServer implements AutoCloseable {
         app.exception(MismatchedInputException.class, (e, ctx) -> ctx.status(400).result(e.getMessage()));
         app.exception(JacksonException.class, (e, ctx) -> ctx.status(400).result(e.getMessage()));
         app.exception(IllegalArgumentException.class, (e, ctx) -> ctx.status(400).result(e.getMessage()));
+        app.exception(UnsupportedOperationException.class, (e, ctx) -> ctx.status(404).result("Not found"));
 
         app.exception(Exception.class, (e, ctx) -> {
             ctx.status(500).result("Server error");
@@ -120,7 +121,7 @@ public class RestServer implements AutoCloseable {
 
         MessagingService messagingService = luckPerms.getMessagingService().orElse(StubMessagingService.INSTANCE);
 
-        UserController userController = new UserController(luckPerms.getUserManager(), messagingService, this.objectMapper);
+        UserController userController = new UserController(luckPerms.getUserManager(), luckPerms.getTrackManager(), messagingService, this.objectMapper);
         GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
         ActionController actionController = new ActionController(luckPerms.getActionLogger());
 
@@ -156,6 +157,9 @@ public class RestServer implements AutoCloseable {
                 get(controller::permissionCheck);
                 post(controller::permissionCheckCustom);
             });
+
+            post("promote", controller::promote);
+            post("demote", controller::demote);
         });
     }
 

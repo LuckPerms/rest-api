@@ -328,4 +328,16 @@ public class GroupController implements PermissionHolderController {
             }
         });
     }
+
+    // POST /group/{id}/promote
+    @Override
+    public void promote(Context ctx) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    // POST /group/{id}/demote
+    @Override
+    public void demote(Context ctx) throws Exception {
+        throw new UnsupportedOperationException();
+    }
 }

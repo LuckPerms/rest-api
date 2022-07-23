@@ -32,8 +32,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
+import me.lucko.luckperms.extension.rest.model.TrackRequest;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.context.ContextSet;
+import net.luckperms.api.context.ImmutableContextSet;
 import net.luckperms.api.messaging.MessagingService;
 import net.luckperms.api.model.PermissionHolder;
 import net.luckperms.api.model.PlayerSaveResult;
@@ -41,6 +44,10 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.track.DemotionResult;
+import net.luckperms.api.track.PromotionResult;
+import net.luckperms.api.track.Track;
+import net.luckperms.api.track.TrackManager;
 
 import io.javalin.http.Context;
 
@@ -53,11 +60,13 @@ import java.util.concurrent.CompletableFuture;
 public class UserController implements PermissionHolderController {
 
     private final UserManager userManager;
+    private final TrackManager trackManager;
     private final MessagingService messagingService;
     private final ObjectMapper objectMapper;
 
-    public UserController(UserManager userManager, MessagingService messagingService, ObjectMapper objectMapper) {
+    public UserController(UserManager userManager, TrackManager trackManager, MessagingService messagingService, ObjectMapper objectMapper) {
         this.userManager = userManager;
+        this.trackManager = trackManager;
         this.messagingService = messagingService;
         this.objectMapper = objectMapper;
     }
@@ -256,5 +265,69 @@ public class UserController implements PermissionHolderController {
                 .thenApply(PermissionCheckResult::from);
 
         ctx.future(future);
+    }
+
+    // POST /user/{id}/promote
+    @Override
+    public void promote(Context ctx) throws Exception {
+        UUID uniqueId = pathParamAsUuid(ctx);
+        TrackRequest req = ctx.bodyAsClass(TrackRequest.class);
+        if (req.track() == null || req.track().isEmpty()) {
+            throw new IllegalArgumentException("Missing track");
+        }
+
+        ContextSet context = req.context() == null ? ImmutableContextSet.empty() : req.context();
+
+        CompletableFuture<PromotionResult> future = this.trackManager.loadTrack(req.track()).thenCompose(opt -> {
+            if (opt.isPresent()) {
+                Track track = opt.get();
+                return this.userManager.loadUser(uniqueId).thenCompose(user -> {
+                    PromotionResult result = track.promote(user, context);
+                    return this.userManager.saveUser(user).thenApply(x -> result);
+                });
+            } else {
+                return CompletableFuture.completedFuture(null);
+            }
+        });
+
+        ctx.future(future, result -> {
+            if (result == null) {
+                ctx.status(404);
+            } else {
+                ctx.json(result);
+            }
+        });
+    }
+
+    // POST /user/{id}/demote
+    @Override
+    public void demote(Context ctx) throws Exception {
+        UUID uniqueId = pathParamAsUuid(ctx);
+        TrackRequest req = ctx.bodyAsClass(TrackRequest.class);
+        if (req.track() == null || req.track().isEmpty()) {
+            throw new IllegalArgumentException("Missing track");
+        }
+
+        ContextSet context = req.context() == null ? ImmutableContextSet.empty() : req.context();
+
+        CompletableFuture<DemotionResult> future = this.trackManager.loadTrack(req.track()).thenCompose(opt -> {
+            if (opt.isPresent()) {
+                Track track = opt.get();
+                return this.userManager.loadUser(uniqueId).thenCompose(user -> {
+                    DemotionResult result = track.demote(user, context);
+                    return this.userManager.saveUser(user).thenApply(x -> result);
+                });
+            } else {
+                return CompletableFuture.completedFuture(null);
+            }
+        });
+
+        ctx.future(future, result -> {
+            if (result == null) {
+                ctx.status(404);
+            } else {
+                ctx.json(result);
+            }
+        });
     }
 }
