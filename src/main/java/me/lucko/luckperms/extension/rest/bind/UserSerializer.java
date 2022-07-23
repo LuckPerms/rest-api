@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
-import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
@@ -39,7 +38,6 @@ import net.luckperms.api.query.QueryOptions;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 

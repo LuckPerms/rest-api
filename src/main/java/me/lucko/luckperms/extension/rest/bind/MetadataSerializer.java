@@ -30,11 +30,8 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 import net.luckperms.api.cacheddata.CachedMetaData;
-import net.luckperms.api.context.ContextSet;
-import net.luckperms.api.node.Node;
 
 import java.io.IOException;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 

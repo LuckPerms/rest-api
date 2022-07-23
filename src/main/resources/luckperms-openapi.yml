@@ -10,7 +10,7 @@ info:
     name: MIT
     url: 'https://github.com/LuckPerms/LuckPerms/blob/master/LICENSE.txt'
 servers:
-  - url: '../'
+  - url: ../
 tags:
   - name: Users
     description: API methods for LuckPerms users.
@@ -34,19 +34,11 @@ paths:
                     uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
                     username: Luck
                     nodes:
-                      - key: minecraft.command.ban
-                        type: permission
+                      - key: group.default
+                        type: inheritance
                         value: true
-                        context:
-                          - key: server
-                            value: survival
-                        expiry: 1658428395
                     metadata:
-                      meta:
-                        nametag-color: red
-                        fly-speed: '5'
-                      prefix: '[Admin] '
-                      suffix: ' [the great]'
+                      meta: {}
                       primaryGroup: default
         '400':
           description: Missing required information
@@ -57,7 +49,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewUser'
-            examples: {}
+            examples:
+              example-1:
+                value:
+                  uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+                  username: Luck
         description: ''
       description: Create a new user.
       tags:
@@ -102,6 +98,9 @@ paths:
                     uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
                     username: Luck
                     nodes:
+                      - key: group.default
+                        type: inheritance
+                        value: true
                       - key: minecraft.command.ban
                         type: permission
                         value: true
@@ -144,6 +143,10 @@ paths:
                       minLength: 1
                       example: Luck
               type: object
+            examples:
+              example-1:
+                value:
+                  username: Luck
         description: ''
       tags:
         - Users
@@ -172,7 +175,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NodeMap'
-              examples: {}
+              examples:
+                example-1:
+                  value:
+                    - key: group.default
+                      type: inheritance
+                      value: true
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '404':
           description: User doesn't exist
       operationId: get-user-nodes
@@ -188,6 +203,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -200,6 +225,15 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  - key: minecraft.command.ban
+                    value: true
+                    context:
+                      - key: server
+                        value: survival
+                    expiry: 1658428395
         description: ''
       tags:
         - Users
@@ -224,6 +258,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -234,6 +278,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  key: minecraft.command.ban
+                  value: true
+                  context:
+                    - key: server
+                      value: survival
+                  expiry: 1658428395
       tags:
         - Users
     put:
@@ -254,6 +307,15 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  - key: minecraft.command.ban
+                    value: true
+                    context:
+                      - key: server
+                        value: survival
+                    expiry: 1658428395
       tags:
         - Users
   '/user/{uniqueId}/meta':
@@ -297,6 +359,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PermissionCheckResult'
+              examples:
+                example-1:
+                  value:
+                    result: 'true'
+                    node:
+                      key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -323,6 +397,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PermissionCheckResult'
+              examples:
+                example-1:
+                  value:
+                    result: 'true'
+                    node:
+                      key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -356,23 +442,8 @@ paths:
                 example-1:
                   value:
                     name: admin
-                    displayName: Admin
-                    weight: 0
-                    nodes:
-                      - key: minecraft.command.ban
-                        type: permission
-                        value: true
-                        context:
-                          - key: server
-                            value: survival
-                        expiry: 1658428395
-                    metadata:
-                      meta:
-                        nametag-color: red
-                        fly-speed: '5'
-                      prefix: '[Admin] '
-                      suffix: ' [the great]'
-                      primaryGroup: default
+                    nodes: []
+                    metadata: {}
         '400':
           description: Missing required information
         '409':
@@ -382,7 +453,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewGroup'
-            examples: {}
+            examples:
+              example-1:
+                value:
+                  name: admin
         description: ''
       description: Create a new group.
       tags:
@@ -426,7 +500,7 @@ paths:
                   value:
                     name: admin
                     displayName: Admin
-                    weight: 0
+                    weight: 10
                     nodes:
                       - key: minecraft.command.ban
                         type: permission
@@ -441,7 +515,7 @@ paths:
                         fly-speed: '5'
                       prefix: '[Admin] '
                       suffix: ' [the great]'
-                      primaryGroup: default
+                      primaryGroup: admin
         '404':
           description: Group doesn't exist
       operationId: get-group
@@ -473,6 +547,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '404':
           description: Group doesn't exist
       operationId: get-group-nodes
@@ -488,6 +572,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -500,6 +594,15 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  - key: minecraft.command.ban
+                    value: true
+                    context:
+                      - key: server
+                        value: survival
+                    expiry: 1658428395
         description: ''
       tags:
         - Groups
@@ -524,6 +627,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NodeMap'
+              examples:
+                example-1:
+                  value:
+                    - key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -534,6 +647,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  key: minecraft.command.ban
+                  value: true
+                  context:
+                    - key: server
+                      value: survival
+                  expiry: 1658428395
       tags:
         - Groups
     put:
@@ -554,6 +676,15 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/NewNode'
+            examples:
+              example-1:
+                value:
+                  - key: minecraft.command.ban
+                    value: true
+                    context:
+                      - key: server
+                        value: survival
+                    expiry: 1658428395
       tags:
         - Groups
   '/group/{name}/meta':
@@ -578,7 +709,7 @@ paths:
                       fly-speed: '5'
                     prefix: '[Admin] '
                     suffix: ' [the great]'
-                    primaryGroup: default
+                    primaryGroup: admin
         '404':
           description: Group doesn't exist
       operationId: get-group-name-meta
@@ -597,6 +728,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PermissionCheckResult'
+              examples:
+                example-1:
+                  value:
+                    result: 'true'
+                    node:
+                      key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -623,6 +766,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PermissionCheckResult'
+              examples:
+                example-1:
+                  value:
+                    result: 'true'
+                    node:
+                      key: minecraft.command.ban
+                      type: permission
+                      value: true
+                      context:
+                        - key: server
+                          value: survival
+                      expiry: 1658428395
         '400':
           description: Missing required information
         '404':
@@ -807,6 +962,7 @@ components:
           example: Luck
       required:
         - uniqueId
+        - username
     NodeMap:
       title: NodeMap
       x-stoplight:

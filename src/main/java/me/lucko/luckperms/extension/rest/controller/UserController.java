@@ -45,6 +45,7 @@ import io.javalin.http.Context;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -56,6 +57,11 @@ public class UserController implements PermissionHolderController {
     public UserController(UserManager userManager, ObjectMapper objectMapper) {
         this.userManager = userManager;
         this.objectMapper = objectMapper;
+    }
+
+    private UUID pathParamAsUuid(Context ctx) throws JsonProcessingException {
+        String uuidString = "\"" + ctx.pathParam("id") + "\"";
+        return this.objectMapper.readValue(uuidString, UUID.class);
     }
 
     // POST /user
@@ -81,18 +87,19 @@ public class UserController implements PermissionHolderController {
         });
     }
 
-    record CreateReq(@JsonProperty(required = true) UUID uniqueId, String username) { }
+    record CreateReq(@JsonProperty(required = true) UUID uniqueId, @JsonProperty(required = true) String username) { }
 
     // GET /user
     @Override
     public void getAll(Context ctx) {
-        ctx.future(this.userManager.getUniqueUsers());
+        CompletableFuture<Set<UUID>> future = this.userManager.getUniqueUsers();
+        ctx.future(future);
     }
 
     // GET /user/{id}
     @Override
-    public void get(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void get(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         ctx.future(this.userManager.loadUser(uniqueId), result -> {
             if (result == null) {
                 ctx.status(404);
@@ -104,18 +111,18 @@ public class UserController implements PermissionHolderController {
 
     // PATCH /user/{id}
     @Override
-    public void update(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void update(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         UpdateReq body = ctx.bodyAsClass(UpdateReq.class);
         ctx.future(this.userManager.savePlayerData(uniqueId, body.username), result -> ctx.result("ok"));
     }
 
-    record UpdateReq(String username) { }
+    record UpdateReq(@JsonProperty(required = true) String username) { }
 
     // DELETE /user/{id}
     @Override
-    public void delete(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void delete(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         CompletableFuture<?> future = this.userManager.modifyUser(uniqueId, user -> user.data().clear())
                 .thenCompose(x -> this.userManager.deletePlayerData(uniqueId));
         ctx.future(future, result -> ctx.result("ok"));
@@ -123,8 +130,8 @@ public class UserController implements PermissionHolderController {
 
     // GET /user/{id}/nodes
     @Override
-    public void nodesGet(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void nodesGet(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenApply(PermissionHolder::getNodes);
         ctx.future(future, result -> {
             if (result == null) {
@@ -138,7 +145,7 @@ public class UserController implements PermissionHolderController {
     // PATCH /user/{id}/nodes
     @Override
     public void nodesAddMultiple(Context ctx) throws JsonProcessingException {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+        UUID uniqueId = pathParamAsUuid(ctx);
         List<Node> nodes = this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
@@ -153,16 +160,16 @@ public class UserController implements PermissionHolderController {
 
     // DELETE /user/{id}/nodes
     @Override
-    public void nodesDeleteAll(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void nodesDeleteAll(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         CompletableFuture<?> future = this.userManager.modifyUser(uniqueId, user -> user.data().clear());
         ctx.future(future, result -> ctx.result("ok"));
     }
 
     // POST /user/{id}/nodes
     @Override
-    public void nodesAddSingle(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void nodesAddSingle(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         Node node = ctx.bodyAsClass(Node.class);
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
@@ -175,7 +182,7 @@ public class UserController implements PermissionHolderController {
     // PUT /user/{id}/nodes
     @Override
     public void nodesSet(Context ctx) throws JsonProcessingException {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+        UUID uniqueId = pathParamAsUuid(ctx);
         List<Node> nodes = this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
@@ -190,8 +197,8 @@ public class UserController implements PermissionHolderController {
 
     // GET /user/{id}/meta
     @Override
-    public void metaGet(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void metaGet(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         CompletableFuture<CachedMetaData> future = this.userManager.loadUser(uniqueId)
                 .thenApply(user -> user.getCachedData().getMetaData());
         ctx.future(future);
@@ -199,10 +206,10 @@ public class UserController implements PermissionHolderController {
 
     // GET /user/{id}/permissionCheck
     @Override
-    public void permissionCheck(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void permissionCheck(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         String permission = ctx.queryParam("permission");
-        if (permission == null) {
+        if (permission == null || permission.isEmpty()) {
             throw new IllegalArgumentException("Missing permission");
         }
 
@@ -215,9 +222,12 @@ public class UserController implements PermissionHolderController {
 
     // POST /user/{id}/permissionCheck
     @Override
-    public void permissionCheckCustom(Context ctx) {
-        UUID uniqueId = ctx.pathParamAsClass("id", UUID.class).get();
+    public void permissionCheckCustom(Context ctx) throws JsonProcessingException {
+        UUID uniqueId = pathParamAsUuid(ctx);
         PermissionCheckRequest req = ctx.bodyAsClass(PermissionCheckRequest.class);
+        if (req.permission() == null || req.permission().isEmpty()) {
+            throw new IllegalArgumentException("Missing permission");
+        }
 
         CompletableFuture<PermissionCheckResult> future = this.userManager.loadUser(uniqueId)
                 .thenApply(user -> {

@@ -25,49 +25,47 @@
 
 package me.lucko.luckperms.extension.rest.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import io.javalin.http.Context;
 
 public interface PermissionHolderController {
 
     // POST /<type>
-    void create(Context ctx);
+    void create(Context ctx) throws Exception;
 
     // GET /<type>
-    void getAll(Context ctx);
+    void getAll(Context ctx) throws Exception;
 
     // GET /<type>/{id}
-    void get(Context ctx);
+    void get(Context ctx) throws Exception;
 
     // PATCH /<type>/{id}
-    void update(Context ctx);
+    void update(Context ctx) throws Exception;
 
     // DELETE /<type>/{id}
-    void delete(Context ctx);
+    void delete(Context ctx) throws Exception;
 
     // GET /<type>/{id}/nodes
-    void nodesGet(Context ctx);
+    void nodesGet(Context ctx) throws Exception;
 
     // PATCH /<type>/{id}/nodes
-    void nodesAddMultiple(Context ctx) throws JsonProcessingException;
+    void nodesAddMultiple(Context ctx) throws Exception;
 
     // DELETE /<type>/{id}/nodes
-    void nodesDeleteAll(Context ctx);
+    void nodesDeleteAll(Context ctx) throws Exception;
 
     // POST /<type>/{id}/nodes
-    void nodesAddSingle(Context ctx);
+    void nodesAddSingle(Context ctx) throws Exception;
 
     // PUT /<type>/{id}/nodes
-    void nodesSet(Context ctx) throws JsonProcessingException;
+    void nodesSet(Context ctx) throws Exception;
 
     // GET /<type>/{id}/meta
-    void metaGet(Context ctx);
+    void metaGet(Context ctx) throws Exception;
 
     // GET /<type>/{id}/permissionCheck
-    void permissionCheck(Context ctx);
+    void permissionCheck(Context ctx) throws Exception;
 
     // POST /<type>/{id}/permissionCheck
-    void permissionCheckCustom(Context ctx);
+    void permissionCheckCustom(Context ctx) throws Exception;
 
 }

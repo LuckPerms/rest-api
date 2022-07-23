@@ -25,40 +25,50 @@
 
 package me.lucko.luckperms.extension.rest;
 
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.extension.Extension;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
-/**
- * A LuckPerms extension to load the REST API {@link RestServer}.
- */
-public class RestExtension implements Extension {
+public class RestConfig {
 
-    private final LuckPerms luckPerms;
-    private RestServer server;
+    public static String getString(String path, String defaultValue) {
+        String sysProperty = "luckperms.rest." + path;
+        String envVariable = sysProperty.toUpperCase(Locale.ROOT).replace('.', '_');
 
-    public RestExtension(LuckPerms luckPerms) {
-        this.luckPerms = luckPerms;
-    }
-
-    @Override
-    public void load() {
-        int port = RestConfig.getInteger("http.port", 8080);
-
-        Thread thread = Thread.currentThread();
-        ClassLoader previousCtxClassLoader = thread.getContextClassLoader();
-        thread.setContextClassLoader(RestExtension.class.getClassLoader());
-        try {
-            this.server = new RestServer(this.luckPerms, port);
-        } finally {
-            thread.setContextClassLoader(previousCtxClassLoader);
+        String value = System.getProperty(sysProperty, System.getenv(envVariable));
+        if (value != null) {
+            return value;
+        } else {
+            return defaultValue;
         }
     }
 
-    @Override
-    public void unload() {
-        if (this.server != null) {
-            this.server.close();
-            this.server = null;
+    public static boolean getBoolean(String path, boolean defaultValue) {
+        String value = getString(path, null);
+        if (value != null) {
+            return Boolean.parseBoolean(value);
+        } else {
+            return defaultValue;
         }
     }
+
+
+    public static int getInteger(String path, int defaultValue) {
+        String value = getString(path, null);
+        if (value != null) {
+            return Integer.parseInt(value);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    public static List<String> getStringList(String path, List<String> defaultValue) {
+        String value = getString(path, null);
+        if (value != null) {
+            return Arrays.asList(value.split(","));
+        } else {
+            return defaultValue;
+        }
+    }
+
 }

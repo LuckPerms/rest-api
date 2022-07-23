@@ -29,6 +29,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import net.luckperms.api.query.QueryOptions;
 
-public record PermissionCheckRequest(@JsonProperty(required = true) String permission, QueryOptions queryOptions) {
+public record PermissionCheckRequest(
+        @JsonProperty(required = true) String permission,
+        QueryOptions queryOptions
+) {
 
 }

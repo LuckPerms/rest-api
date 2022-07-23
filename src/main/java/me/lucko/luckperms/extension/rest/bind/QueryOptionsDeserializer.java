@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
 import net.luckperms.api.context.ContextSet;
-import net.luckperms.api.context.ImmutableContextSet;
 import net.luckperms.api.query.Flag;
 import net.luckperms.api.query.QueryMode;
 import net.luckperms.api.query.QueryOptions;
@@ -59,14 +58,14 @@ public class QueryOptionsDeserializer extends JsonDeserializer<QueryOptions> {
                     ? QueryOptions.defaultContextualOptions().flags()
                     : this.flags;
 
-            ContextSet contexts = this.flags == null
-                    ? ImmutableContextSet.empty()
-                    : this.contexts;
+            QueryOptions.Builder builder = QueryOptions.builder(mode)
+                    .flags(flags);
 
-            return QueryOptions.builder(mode)
-                    .flags(flags)
-                    .context(contexts)
-                    .build();
+            if (mode == QueryMode.CONTEXTUAL && this.contexts != null) {
+                builder.context(this.contexts);
+            }
+
+            return builder.build();
         }
     }
 

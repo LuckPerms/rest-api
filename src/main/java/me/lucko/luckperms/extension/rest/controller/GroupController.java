@@ -92,7 +92,7 @@ public class GroupController implements PermissionHolderController {
         CompletableFuture<Group> future = this.groupManager.loadGroup(name).thenApply(opt -> opt.orElse(null));
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -134,7 +134,7 @@ public class GroupController implements PermissionHolderController {
                 .thenApply(opt -> opt.map(PermissionHolder::getNodes).orElse(null));
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -161,7 +161,7 @@ public class GroupController implements PermissionHolderController {
 
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -210,7 +210,7 @@ public class GroupController implements PermissionHolderController {
 
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -238,7 +238,7 @@ public class GroupController implements PermissionHolderController {
 
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -253,7 +253,7 @@ public class GroupController implements PermissionHolderController {
                 .thenApply(opt -> opt.map(g -> g.getCachedData().getMetaData()).orElse(null));
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -265,7 +265,7 @@ public class GroupController implements PermissionHolderController {
     public void permissionCheck(Context ctx) {
         String name = ctx.pathParam("id");
         String permission = ctx.queryParam("permission");
-        if (permission == null) {
+        if (permission == null || permission.isEmpty()) {
             throw new IllegalArgumentException("Missing permission");
         }
 
@@ -277,7 +277,7 @@ public class GroupController implements PermissionHolderController {
 
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
@@ -289,6 +289,9 @@ public class GroupController implements PermissionHolderController {
     public void permissionCheckCustom(Context ctx) {
         String name = ctx.pathParam("id");
         PermissionCheckRequest req = ctx.bodyAsClass(PermissionCheckRequest.class);
+        if (req.permission() == null || req.permission().isEmpty()) {
+            throw new IllegalArgumentException("Missing permission");
+        }
 
         CompletableFuture<PermissionCheckResult> future = this.groupManager.loadGroup(name)
                 .thenApply(opt -> opt.map(group -> {
@@ -301,7 +304,7 @@ public class GroupController implements PermissionHolderController {
 
         ctx.future(future, result -> {
             if (result == null) {
-                ctx.status(404);
+                ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }

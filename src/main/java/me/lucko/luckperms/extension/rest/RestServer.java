@@ -25,11 +25,13 @@
 
 package me.lucko.luckperms.extension.rest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.collect.ImmutableSet;
 
 import me.lucko.luckperms.extension.rest.bind.ContextSetDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetSerializer;
@@ -42,6 +44,7 @@ import me.lucko.luckperms.extension.rest.bind.UserSerializer;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
 import me.lucko.luckperms.extension.rest.controller.PermissionHolderController;
 import me.lucko.luckperms.extension.rest.controller.UserController;
+import me.lucko.luckperms.extension.rest.util.CustomObjectMapper;
 import me.lucko.luckperms.extension.rest.util.SwaggerUi;
 
 import net.luckperms.api.LuckPerms;
@@ -52,15 +55,18 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.query.QueryOptions;
 
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.javalin.Javalin;
 import io.javalin.core.JavalinConfig;
 import io.javalin.core.util.JavalinLogger;
+import io.javalin.http.HttpCode;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
+
+import java.util.Collections;
+import java.util.Set;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -69,6 +75,9 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
 
+/**
+ * An HTTP server that implements a REST API for LuckPerms.
+ */
 public class RestServer implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestServer.class);
 
@@ -76,17 +85,18 @@ public class RestServer implements AutoCloseable {
     private final Javalin app;
 
     public RestServer(LuckPerms luckPerms, int port) {
-        LOGGER.info("[REST API] Starting server...");
+        LOGGER.info("[REST] Starting server...");
 
-        this.objectMapper = createObjectMapper();
+        this.objectMapper = new CustomObjectMapper();
 
         this.app = Javalin.create(this::configure)
                 .start(port);
 
+        this.setupLogging(this.app);
         this.setupErrorHandlers(this.app);
         this.setupRoutes(this.app, luckPerms);
 
-        LOGGER.info("[REST API] Startup complete! Listening on :" + port);
+        LOGGER.info("[REST] Startup complete! Listening on http://localhost:" + port);
     }
 
     @Override
@@ -94,35 +104,21 @@ public class RestServer implements AutoCloseable {
         this.app.close();
     }
 
-    private static ObjectMapper createObjectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-
-        //noinspection deprecation
-        mapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(ContextSet.class, new ContextSetDeserializer());
-        module.addSerializer(ContextSet.class, new ContextSetSerializer());
-        module.addSerializer(Group.class, new GroupSerializer());
-        module.addSerializer(CachedMetaData.class, new MetadataSerializer());
-        module.addDeserializer(Node.class, new NodeDeserializer());
-        module.addSerializer(Node.class, new NodeSerializer());
-        module.addDeserializer(QueryOptions.class, new QueryOptionsDeserializer());
-        module.addSerializer(User.class, new UserSerializer());
-        mapper.registerModule(module);
-
-        return mapper;
-    }
-
-    public void configure(JavalinConfig config) {
+    private void configure(JavalinConfig config) {
+        // disable javalin excessive logging
         config.showJavalinBanner = false;
+        JavalinLogger.enabled = false;
         JavalinLogger.startupInfo = false;
         OpenApiVersionUtil.INSTANCE.setLogWarnings(false);
+
+        this.setupAuth(config);
+
         SwaggerUi.setup(config);
+
         config.jsonMapper(new JavalinJackson(this.objectMapper));
     }
 
-    public void setupErrorHandlers(Javalin app) {
+    private void setupErrorHandlers(Javalin app) {
         app.exception(MismatchedInputException.class, (e, ctx) -> ctx.status(400).result(e.getMessage()));
         app.exception(JacksonException.class, (e, ctx) -> ctx.status(400).result(e.getMessage()));
         app.exception(IllegalArgumentException.class, (e, ctx) -> ctx.status(400).result(e.getMessage()));
@@ -133,8 +129,7 @@ public class RestServer implements AutoCloseable {
         });
     }
 
-    public void setupRoutes(Javalin app, LuckPerms luckPerms) {
-
+    private void setupRoutes(Javalin app, LuckPerms luckPerms) {
         app.get("/", ctx -> ctx.redirect("/docs/swagger-ui"));
 
         UserController userController = new UserController(luckPerms.getUserManager(), this.objectMapper);
@@ -169,6 +164,56 @@ public class RestServer implements AutoCloseable {
                 get(controller::permissionCheck);
                 post(controller::permissionCheckCustom);
             });
+        });
+    }
+
+    private void setupAuth(JavalinConfig config) {
+        if (RestConfig.getBoolean("auth", false)) {
+            Set<String> keys = ImmutableSet.copyOf(
+                    RestConfig.getStringList("auth.keys", Collections.emptyList())
+            );
+
+            if (keys.isEmpty()) {
+                LOGGER.warn("[REST] Auth is enabled but there are no API keys registered!");
+                LOGGER.warn("[REST] Set some keys with the 'LUCKPERMS_REST_AUTH_KEYS' variable.");
+            }
+
+            config.accessManager((handler, ctx, routeRoles) -> {
+                if (ctx.path().equals("/") || ctx.path().startsWith("/docs")) {
+                    handler.handle(ctx);
+                    return;
+                }
+
+                String authorization = ctx.header("Authorization");
+                if (authorization == null) {
+                    ctx.status(HttpCode.UNAUTHORIZED).result("No API key");
+                    return;
+                }
+
+                String[] parts = authorization.split(" ");
+                if (parts.length != 2) {
+                    ctx.status(HttpCode.UNAUTHORIZED).result("Invalid API key");
+                    return;
+                }
+
+                if (!parts[0].equals("Bearer")) {
+                    ctx.status(HttpCode.UNAUTHORIZED).result("Unknown Authorization type");
+                    return;
+                }
+
+                if (!keys.contains(parts[1])) {
+                    ctx.status(HttpCode.UNAUTHORIZED).result("Unauthorized");
+                    return;
+                }
+
+                handler.handle(ctx);
+            });
+        }
+    }
+
+    private void setupLogging(Javalin app) {
+        app.after(ctx -> {
+            LOGGER.info("[REST] " + ctx.method() + " - " + ctx.path() + " - " + ctx.status());
         });
     }
 
