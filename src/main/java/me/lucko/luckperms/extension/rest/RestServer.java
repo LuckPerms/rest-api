@@ -210,8 +210,12 @@ public class RestServer implements AutoCloseable {
     }
 
     private void setupLogging(Javalin app) {
+        app.before(ctx -> ctx.attribute("startTime", System.currentTimeMillis()));
         app.after(ctx -> {
-            LOGGER.info("[REST] " + ctx.method() + " - " + ctx.path() + " - " + ctx.status());
+            //noinspection ConstantConditions
+            long startTime = ctx.attribute("startTime");
+            long duration = System.currentTimeMillis() - startTime;
+            LOGGER.info("[REST] %s %s - %d - %dms".formatted(ctx.method(), ctx.path(), ctx.status(), duration));
         });
     }
 
