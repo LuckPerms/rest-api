@@ -1,0 +1,43 @@
+version: "3.8"
+
+# Example docker compose file for the LuckPerms rest-api.
+# You'll need to configure the database yourself :)
+#
+#   If your database is running on another machine, just configure the
+#   address/database/username/password below as normal.
+#
+#   If your database is running on the same (this) machine, but outside Docker:
+#   - uncomment out the 'extra_hosts' section
+#   - configure the database/username/password, but leave the address as 'database:3306'
+
+services:
+
+  luckperms-rest-api:
+    image: ghcr.io/luckperms/rest-api
+    ports:
+      - "127.0.0.1:8080:8080" # make the API endpoint accessible on http://localhost:8080
+
+    # Uncomment if your database is running on your host
+    #extra_hosts:
+    #  - "database:host-gateway"
+
+    environment:
+
+      # configure the LuckPerms standalone "plugin"
+      # https://luckperms.net/wiki/Configuration#environment-variables
+      LUCKPERMS_STORAGE_METHOD: mysql
+      LUCKPERMS_DATA_ADDRESS: database:3306
+      LUCKPERMS_DATA_DATABASE: minecraft
+      LUCKPERMS_DATA_USERNAME: root
+      LUCKPERMS_DATA_PASSWORD: passw0rd
+
+      # configure the REST API
+      # https://github.com/LuckPerms/rest-api#configuration
+      LUCKPERMS_REST_HTTP_PORT: 8080
+      LUCKPERMS_REST_AUTH: false
+
+  #database:
+  #  image: mariadb:10.5.8
+  #  environment:
+  #    MYSQL_ROOT_PASSWORD: passw0rd
+  #    MYSQL_DATABASE: minecraft
