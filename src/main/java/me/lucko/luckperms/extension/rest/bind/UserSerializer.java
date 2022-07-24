@@ -48,7 +48,7 @@ public class UserSerializer extends JsonSerializer<User> {
         gen.writePOJO(Model.from(value));
     }
 
-    record Model(UUID uniqueId, String username, List<String> parentGroups, Collection<Node> nodes, CachedMetaData metaData) {
+    record Model(UUID uniqueId, String username, List<String> parentGroups, Collection<Node> nodes, CachedMetaData metadata) {
         static Model from(User user) {
             return new Model(
                     user.getUniqueId(),
