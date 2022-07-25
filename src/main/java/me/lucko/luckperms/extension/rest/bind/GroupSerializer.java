@@ -43,7 +43,7 @@ public class GroupSerializer extends JsonSerializer<Group> {
         gen.writePOJO(Model.from(value));
     }
 
-    record Model(String name, String displayName, int weight, Collection<Node> nodes, CachedMetaData metaData) {
+    record Model(String name, String displayName, int weight, Collection<Node> nodes, CachedMetaData metadata) {
         static Model from(Group group) {
             return new Model(
                     group.getName(),
