@@ -1,6 +1,7 @@
 name: Build Gradle and Publish Docker image
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - 'main'
