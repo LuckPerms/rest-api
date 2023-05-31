@@ -123,8 +123,8 @@ public class RestServer implements AutoCloseable {
 
         app.routes(() -> {
             path("user", () -> {
-                setupControllerRoutes(userController);
                 get("lookup", userController::lookup);
+                setupControllerRoutes(userController);
             });
             path("group", () -> {
                 setupControllerRoutes(groupController);
