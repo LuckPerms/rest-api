@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import me.lucko.luckperms.extension.rest.bind.ActionDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetSerializer;
@@ -41,7 +40,6 @@ import me.lucko.luckperms.extension.rest.bind.NodeSerializer;
 import me.lucko.luckperms.extension.rest.bind.PromotionResultSerializer;
 import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
 import me.lucko.luckperms.extension.rest.bind.UserSerializer;
-
 import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;

@@ -25,11 +25,10 @@
 
 package me.lucko.luckperms.extension.rest.model;
 
+import io.javalin.http.Context;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.matcher.NodeMatcher;
-
-import io.javalin.http.Context;
 
 public class SearchRequest {
 

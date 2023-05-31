@@ -26,7 +26,6 @@
 package me.lucko.luckperms.extension.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import net.luckperms.api.query.QueryOptions;
 
 public record PermissionCheckRequest(

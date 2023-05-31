@@ -28,7 +28,6 @@ package me.lucko.luckperms.extension.rest.bind;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.query.Flag;
 import net.luckperms.api.query.QueryMode;

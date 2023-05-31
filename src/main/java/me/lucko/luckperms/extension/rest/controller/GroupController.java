@@ -29,12 +29,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.javalin.http.Context;
 import me.lucko.luckperms.extension.rest.model.GroupSearchResult;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
 import me.lucko.luckperms.extension.rest.model.SearchRequest;
-
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.messaging.MessagingService;
 import net.luckperms.api.model.PermissionHolder;
@@ -43,8 +42,6 @@ import net.luckperms.api.model.group.GroupManager;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.matcher.NodeMatcher;
 import net.luckperms.api.query.QueryOptions;
-
-import io.javalin.http.Context;
 
 import java.util.Collection;
 import java.util.List;

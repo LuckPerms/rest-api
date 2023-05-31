@@ -25,10 +25,9 @@
 
 package me.lucko.luckperms.extension.rest.controller;
 
+import io.javalin.http.Context;
 import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.actionlog.ActionLogger;
-
-import io.javalin.http.Context;
 
 import java.util.concurrent.CompletableFuture;
 

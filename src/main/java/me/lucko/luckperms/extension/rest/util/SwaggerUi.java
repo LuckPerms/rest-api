@@ -25,13 +25,12 @@
 
 package me.lucko.luckperms.extension.rest.util;
 
-import me.lucko.luckperms.extension.rest.RestServer;
-
 import io.javalin.core.JavalinConfig;
 import io.javalin.plugin.openapi.OpenApiOptions;
 import io.javalin.plugin.openapi.OpenApiPlugin;
 import io.javalin.plugin.openapi.ui.SwaggerOptions;
 import io.swagger.v3.oas.models.OpenAPI;
+import me.lucko.luckperms.extension.rest.RestServer;
 
 import java.util.Objects;
 
