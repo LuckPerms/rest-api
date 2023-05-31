@@ -29,7 +29,12 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.google.common.collect.ImmutableSet;
-
+import io.javalin.Javalin;
+import io.javalin.core.JavalinConfig;
+import io.javalin.core.util.JavalinLogger;
+import io.javalin.http.HttpCode;
+import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
 import me.lucko.luckperms.extension.rest.controller.ActionController;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
 import me.lucko.luckperms.extension.rest.controller.PermissionHolderController;
@@ -37,29 +42,15 @@ import me.lucko.luckperms.extension.rest.controller.UserController;
 import me.lucko.luckperms.extension.rest.util.CustomObjectMapper;
 import me.lucko.luckperms.extension.rest.util.StubMessagingService;
 import me.lucko.luckperms.extension.rest.util.SwaggerUi;
-
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.messaging.MessagingService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.javalin.Javalin;
-import io.javalin.core.JavalinConfig;
-import io.javalin.core.util.JavalinLogger;
-import io.javalin.http.HttpCode;
-import io.javalin.plugin.json.JavalinJackson;
-import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
 
 import java.util.Collections;
 import java.util.Set;
 
-import static io.javalin.apibuilder.ApiBuilder.delete;
-import static io.javalin.apibuilder.ApiBuilder.get;
-import static io.javalin.apibuilder.ApiBuilder.patch;
-import static io.javalin.apibuilder.ApiBuilder.path;
-import static io.javalin.apibuilder.ApiBuilder.post;
-import static io.javalin.apibuilder.ApiBuilder.put;
+import static io.javalin.apibuilder.ApiBuilder.*;
 
 /**
  * An HTTP server that implements a REST API for LuckPerms.
@@ -126,8 +117,13 @@ public class RestServer implements AutoCloseable {
         ActionController actionController = new ActionController(luckPerms.getActionLogger());
 
         app.routes(() -> {
-            path("user", () -> setupControllerRoutes(userController));
-            path("group", () -> setupControllerRoutes(groupController));
+            path("user", () -> {
+                setupControllerRoutes(userController);
+                get("lookup", userController::lookup);
+            });
+            path("group", () -> {
+                setupControllerRoutes(groupController);
+            });
             path("action", () -> {
                 post(actionController::submit);
             });

@@ -29,13 +29,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
-import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
-import me.lucko.luckperms.extension.rest.model.SearchRequest;
-import me.lucko.luckperms.extension.rest.model.TrackRequest;
-import me.lucko.luckperms.extension.rest.model.UserSearchResult;
-
+import io.javalin.http.Context;
+import me.lucko.luckperms.extension.rest.model.*;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.ImmutableContextSet;
@@ -51,8 +46,6 @@ import net.luckperms.api.track.DemotionResult;
 import net.luckperms.api.track.PromotionResult;
 import net.luckperms.api.track.Track;
 import net.luckperms.api.track.TrackManager;
-
-import io.javalin.http.Context;
 
 import java.util.Collection;
 import java.util.List;
@@ -74,9 +67,13 @@ public class UserController implements PermissionHolderController {
         this.objectMapper = objectMapper;
     }
 
-    private UUID pathParamAsUuid(Context ctx) throws JsonProcessingException {
-        String uuidString = "\"" + ctx.pathParam("id") + "\"";
+    private UUID parseUuid(String s) throws JsonProcessingException {
+        String uuidString = "\"" + s + "\"";
         return this.objectMapper.readValue(uuidString, UUID.class);
+    }
+
+    private UUID pathParamAsUuid(Context ctx) throws JsonProcessingException {
+        return parseUuid(ctx.pathParam("id"));
     }
 
     // POST /user
@@ -121,6 +118,38 @@ public class UserController implements PermissionHolderController {
                         .toList()
                 );
         ctx.future(future);
+    }
+
+    // GET /user/lookup
+    public void lookup(Context ctx) throws Exception {
+        String usernameParam = ctx.queryParam("username");
+        String uniqueIdParam = ctx.queryParam("uniqueId");
+
+        CompletableFuture<UserLookupResult> future;
+        if (usernameParam != null && !usernameParam.isEmpty()) {
+            future = this.userManager.lookupUniqueId(usernameParam)
+                    .thenApply(uniqueId -> uniqueId == null
+                            ? null
+                            : new UserLookupResult(usernameParam, uniqueId));
+
+        } else if (uniqueIdParam != null && !uniqueIdParam.isEmpty()) {
+            UUID parsedUniqueId = parseUuid(uniqueIdParam);
+            future = this.userManager.lookupUsername(parsedUniqueId)
+                    .thenApply(username -> username == null || username.isEmpty()
+                            ? null
+                            : new UserLookupResult(username, parsedUniqueId));
+
+        } else {
+            throw new IllegalArgumentException("Must specify username or unique id");
+        }
+
+        ctx.future(future, result -> {
+            if (result == null) {
+                ctx.status(404);
+            } else {
+                ctx.json(result);
+            }
+        });
     }
 
     // GET /user/{id}

@@ -81,6 +81,54 @@ paths:
       description: Create a new user.
       tags:
         - Users
+  /user/lookup:
+    get:
+      summary: Search for a user with the given username or unique id
+      operationId: get-user-lookup
+      tags:
+        - Users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uniqueId:
+                    $ref: '#/components/schemas/UniqueId'
+                  username:
+                    type: string
+              examples:
+                example-1:
+                  value:
+                    uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+                    username: Luck
+        '400':
+          description: Missing required information
+        '404':
+          description: User doesn't exist
+      description: |-
+        Lookup the unique id or username of a user with the given username or unique id.
+
+        You must specify one of the query parameters in the request.
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+            example: Luck
+          in: query
+          name: username
+          description: The username to search for
+        - schema:
+            type: string
+            format: uuid
+            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            example: c1d60c50-70b5-4722-8057-87767557e50d
+          in: query
+          name: uniqueId
+          description: The unique id to search for
+    parameters: []
   /user/search:
     get:
       summary: Search for users with given nodes
@@ -431,7 +479,7 @@ paths:
                     primaryGroup: default
         '404':
           description: User doesn't exist
-      operationId: get-user-uniqueId-meta
+      operationId: get-user-meta
       description: Get a users metadata
   '/user/{uniqueId}/permissionCheck':
     parameters:
@@ -971,7 +1019,7 @@ paths:
                     primaryGroup: admin
         '404':
           description: Group doesn't exist
-      operationId: get-group-name-meta
+      operationId: get-group-meta
       description: Get the groups metadata
   '/group/{name}/permissionCheck':
     parameters:
@@ -1161,8 +1209,6 @@ components:
       description: A context pair.
     ContextSet:
       title: ContextSet
-      x-stoplight:
-        id: x6gu6czcagtng
       type: array
       items:
         $ref: '#/components/schemas/Context'
@@ -1170,8 +1216,6 @@ components:
       x-examples: {}
     Group:
       title: Group
-      x-stoplight:
-        id: 4xch4cn4mxc3u
       type: object
       properties:
         name:
@@ -1192,8 +1236,6 @@ components:
         - metadata
     NewGroup:
       title: NewGroup
-      x-stoplight:
-        id: 4xch4cn4mxc3u
       type: object
       properties:
         name:
@@ -1202,8 +1244,6 @@ components:
         - name
     User:
       title: User
-      x-stoplight:
-        id: 4xch4cn4mxc3u
       type: object
       properties:
         uniqueId:
@@ -1226,8 +1266,6 @@ components:
         - metadata
     NewUser:
       title: NewUser
-      x-stoplight:
-        id: 4xch4cn4mxc3u
       type: object
       properties:
         uniqueId:
@@ -1241,16 +1279,12 @@ components:
         - username
     NodeMap:
       title: NodeMap
-      x-stoplight:
-        id: dlrdoescpnbhh
       type: array
       items:
         $ref: '#/components/schemas/Node'
       description: A map (array) of nodes.
     Metadata:
       title: Metadata
-      x-stoplight:
-        id: jweo4hdxmecgn
       type: object
       properties:
         meta:
@@ -1279,8 +1313,6 @@ components:
     UniqueId:
       type: string
       title: Unique Id
-      x-stoplight:
-        id: 1juihei0xo8qa
       description: A player unique id (UUID)
       example: c1d60c50-70b5-4722-8057-87767557e50d
       format: uuid
@@ -1294,8 +1326,6 @@ components:
       minLength: 1
     PermissionCheckResult:
       title: PermissionCheckResult
-      x-stoplight:
-        id: ht61bwitr05b6
       type: object
       properties:
         result:
@@ -1312,8 +1342,6 @@ components:
       description: The result returned after running a permission check.
     PermissionCheckRequest:
       title: PermissionCheckRequest
-      x-stoplight:
-        id: ht61bwitr05b6
       type: object
       description: The request parameters for a permission check.
       properties:
@@ -1348,8 +1376,6 @@ components:
                 value: survival
     QueryOptions:
       title: QueryOptions
-      x-stoplight:
-        id: xwwcq7jm3sfhn
       type: object
       properties:
         mode:
@@ -1364,8 +1390,6 @@ components:
           $ref: '#/components/schemas/ContextSet'
     QueryFlags:
       title: QueryFlags
-      x-stoplight:
-        id: stooif1ezfxv1
       type: array
       items:
         type: string
@@ -1383,8 +1407,6 @@ components:
         - apply_inheritance_nodes_without_world_context
     Action:
       title: Action
-      x-stoplight:
-        id: bsufd88gmrjvi
       type: object
       x-examples:
         example-1:
@@ -1445,8 +1467,6 @@ components:
         - description
     PromotionResult:
       title: PromotionResult
-      x-stoplight:
-        id: caj1zmymehuk1
       type: object
       properties:
         success:
@@ -1503,8 +1523,6 @@ components:
       description: The result of demoting a user.
     TrackRequest:
       title: TrackRequest
-      x-stoplight:
-        id: 73y5bg63c2m3y
       type: object
       properties:
         track:
