@@ -30,11 +30,15 @@ A REST API for LuckPerms.
 
 The app can be configured using Java system properties or environment variables.
 
-| Environment Variable       | Description                                      | Default Value |
-|----------------------------|--------------------------------------------------|---------------|
-| `LUCKPERMS_REST_HTTP_PORT` | The port that the HTTP server should listen on   | `8080`        | 
-| `LUCKPERMS_REST_AUTH`      | If API key authorization is enabled              | `false`       |
-| `LUCKPERMS_REST_AUTH_KEYS` | A comma-separated list of accepted API keys      | *none*        |
+| Environment Variable          | Description                                                    | Default Value |
+|-------------------------------|----------------------------------------------------------------|---------------|
+| `LUCKPERMS_REST_HTTP_PORT`    | The port that the HTTP server should listen on                 | `8080`        | 
+| `LUCKPERMS_REST_AUTH`         | If API key authorization is enabled                            | `false`       |
+| `LUCKPERMS_REST_AUTH_KEYS`    | A comma-separated list of accepted API keys                    | *none*        |
+| `LUCKPERMS_REST_CACHE_USERS`  | If the cache<sup>*</sup> should be used for user GET requests  | `true`        |
+| `LUCKPERMS_REST_CACHE_GROUPS` | If the cache<sup>*</sup> should be used for group GET requests | `true`        |
+
+**<sup>*</sup>** When a [messaging service](https://luckperms.net/wiki/Syncing-data-between-servers#messaging-services) is configured (recommended), the cache will be invalidated automatically whenever data is changed by other LP instances.
 
 ## Security
 

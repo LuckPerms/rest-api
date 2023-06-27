@@ -30,6 +30,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.Context;
+import me.lucko.luckperms.extension.rest.RestConfig;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
 import me.lucko.luckperms.extension.rest.model.SearchRequest;
@@ -59,6 +60,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class UserController implements PermissionHolderController {
+    private static final boolean CACHE = RestConfig.getBoolean("cache.users", true);
 
     private final UserManager userManager;
     private final TrackManager trackManager;
@@ -79,6 +81,16 @@ public class UserController implements PermissionHolderController {
 
     private UUID pathParamAsUuid(Context ctx) throws JsonProcessingException {
         return parseUuid(ctx.pathParam("id"));
+    }
+
+    private CompletableFuture<User> loadUserCached(UUID uniqueId) {
+        if (CACHE) {
+            User user = this.userManager.getUser(uniqueId);
+            if (user != null) {
+                return CompletableFuture.completedFuture(user);
+            }
+        }
+        return this.userManager.loadUser(uniqueId);
     }
 
     // POST /user
@@ -161,7 +173,7 @@ public class UserController implements PermissionHolderController {
     @Override
     public void get(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        ctx.future(this.userManager.loadUser(uniqueId), result -> {
+        ctx.future(loadUserCached(uniqueId), result -> {
             if (result == null) {
                 ctx.status(404);
             } else {
@@ -197,7 +209,7 @@ public class UserController implements PermissionHolderController {
     @Override
     public void nodesGet(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenApply(PermissionHolder::getNodes);
+        CompletableFuture<Collection<Node>> future = loadUserCached(uniqueId).thenApply(PermissionHolder::getNodes);
         ctx.future(future, result -> {
             if (result == null) {
                 ctx.status(404);
@@ -285,7 +297,7 @@ public class UserController implements PermissionHolderController {
     @Override
     public void metaGet(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        CompletableFuture<CachedMetaData> future = this.userManager.loadUser(uniqueId)
+        CompletableFuture<CachedMetaData> future = loadUserCached(uniqueId)
                 .thenApply(user -> user.getCachedData().getMetaData());
         ctx.future(future);
     }
@@ -299,7 +311,7 @@ public class UserController implements PermissionHolderController {
             throw new IllegalArgumentException("Missing permission");
         }
 
-        CompletableFuture<PermissionCheckResult> future = this.userManager.loadUser(uniqueId)
+        CompletableFuture<PermissionCheckResult> future = loadUserCached(uniqueId)
                 .thenApply(user -> user.getCachedData().getPermissionData().queryPermission(permission))
                 .thenApply(PermissionCheckResult::from);
 
