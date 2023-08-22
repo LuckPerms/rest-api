@@ -312,6 +312,8 @@ paths:
     post:
       summary: Add a node to a user
       operationId: add-user-node
+      parameters:
+        - $ref: '#/components/parameters/temporaryNodeMergeStrategy'
       responses:
         '200':
           description: Ok - returns the updated nodes
@@ -353,6 +355,8 @@ paths:
     patch:
       summary: Add multiple nodes to a user
       operationId: add-user-nodes
+      parameters:
+        - $ref: '#/components/parameters/temporaryNodeMergeStrategy'
       responses:
         '200':
           description: Ok - returns the updated nodes
@@ -849,6 +853,8 @@ paths:
     post:
       summary: Add a node to a group
       operationId: add-group-node
+      parameters:
+        - $ref: '#/components/parameters/temporaryNodeMergeStrategy'
       responses:
         '200':
           description: Ok - returns the updated nodes
@@ -890,6 +896,8 @@ paths:
     patch:
       summary: Add multiple Group Nodes
       operationId: add-group-nodes
+      parameters:
+        - $ref: '#/components/parameters/temporaryNodeMergeStrategy'
       responses:
         '200':
           description: Ok - returns the updated nodes
@@ -1555,6 +1563,15 @@ components:
         results:
           $ref: '#/components/schemas/NodeMap'
       description: ''
+    TemporaryNodeMergeStrategy:
+      title: TemporaryNodeMergeStrategy
+      type: string
+      description: Controls how the implementation should behave when new temporary nodes are set that would otherwise conflict with existing entries.
+      enum:
+        - add_new_duration_to_existing
+        - replace_existing_if_duration_longer
+        - none
+      default: 'none'
   securitySchemes:
     apikey:
       type: http
@@ -1582,5 +1599,12 @@ components:
         minLength: 1
       required: true
       description: A group name
+    temporaryNodeMergeStrategy:
+      name: temporaryNodeMergeStrategy
+      in: query
+      schema:
+        $ref: '#/components/schemas/TemporaryNodeMergeStrategy'
+      required: false
+      description: The node merge strategy
 security:
   - apikey: []
