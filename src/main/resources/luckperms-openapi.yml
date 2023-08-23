@@ -1153,6 +1153,7 @@ components:
         expiry:
           type: integer
           example: 1658428395
+          description: The instant the node will expire, in epoch seconds.
       required:
         - key
         - type
@@ -1184,6 +1185,7 @@ components:
         expiry:
           type: integer
           example: 1658428395
+          description: The instant the node will expire, in epoch seconds.
       required:
         - key
     Context:
