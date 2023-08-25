@@ -35,8 +35,10 @@ import me.lucko.luckperms.extension.rest.model.GroupSearchResult;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
 import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
 import me.lucko.luckperms.extension.rest.model.SearchRequest;
+import me.lucko.luckperms.extension.rest.util.ParamUtils;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.messaging.MessagingService;
+import net.luckperms.api.model.data.TemporaryNodeMergeStrategy;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.group.GroupManager;
 import net.luckperms.api.node.Node;
@@ -181,12 +183,13 @@ public class GroupController implements PermissionHolderController {
     public void nodesAddMultiple(Context ctx) throws JsonProcessingException {
         String name = ctx.pathParam("id");
         List<Node> nodes = this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
+        TemporaryNodeMergeStrategy mergeStrategy = ParamUtils.queryParamAsTemporaryNodeMergeStrategy(this.objectMapper, ctx);
 
         CompletableFuture<Collection<Node>> future = this.groupManager.loadGroup(name).thenCompose(opt -> {
             if (opt.isPresent()) {
                 Group group = opt.get();
                 for (Node node : nodes) {
-                    group.data().add(node);
+                    group.data().add(node, mergeStrategy);
                 }
                 return this.groupManager.saveGroup(group).thenApply(v -> {
                     this.messagingService.pushUpdate();
@@ -244,14 +247,15 @@ public class GroupController implements PermissionHolderController {
 
     // POST /group/{id}/nodes
     @Override
-    public void nodesAddSingle(Context ctx) {
+    public void nodesAddSingle(Context ctx) throws JsonProcessingException {
         String name = ctx.pathParam("id");
         Node node = ctx.bodyAsClass(Node.class);
+        TemporaryNodeMergeStrategy mergeStrategy = ParamUtils.queryParamAsTemporaryNodeMergeStrategy(this.objectMapper, ctx);
 
         CompletableFuture<Collection<Node>> future = this.groupManager.loadGroup(name).thenCompose(opt -> {
             if (opt.isPresent()) {
                 Group group = opt.get();
-                group.data().add(node);
+                group.data().add(node, mergeStrategy);
                 return this.groupManager.saveGroup(group).thenApply(v -> {
                     this.messagingService.pushUpdate();
                     return group.getNodes();

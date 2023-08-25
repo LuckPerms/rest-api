@@ -37,12 +37,14 @@ import me.lucko.luckperms.extension.rest.model.SearchRequest;
 import me.lucko.luckperms.extension.rest.model.TrackRequest;
 import me.lucko.luckperms.extension.rest.model.UserLookupResult;
 import me.lucko.luckperms.extension.rest.model.UserSearchResult;
+import me.lucko.luckperms.extension.rest.util.ParamUtils;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.ImmutableContextSet;
 import net.luckperms.api.messaging.MessagingService;
 import net.luckperms.api.model.PermissionHolder;
 import net.luckperms.api.model.PlayerSaveResult;
+import net.luckperms.api.model.data.TemporaryNodeMergeStrategy;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
 import net.luckperms.api.node.Node;
@@ -224,10 +226,11 @@ public class UserController implements PermissionHolderController {
     public void nodesAddMultiple(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
         List<Node> nodes = this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
+        TemporaryNodeMergeStrategy mergeStrategy = ParamUtils.queryParamAsTemporaryNodeMergeStrategy(this.objectMapper, ctx);
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
             for (Node node : nodes) {
-                user.data().add(node);
+                user.data().add(node, mergeStrategy);
             }
             return this.userManager.saveUser(user).thenApply(v -> {
                 this.messagingService.pushUserUpdate(user);
@@ -263,9 +266,10 @@ public class UserController implements PermissionHolderController {
     public void nodesAddSingle(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
         Node node = ctx.bodyAsClass(Node.class);
+        TemporaryNodeMergeStrategy mergeStrategy = ParamUtils.queryParamAsTemporaryNodeMergeStrategy(this.objectMapper, ctx);
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
-            user.data().add(node);
+            user.data().add(node, mergeStrategy);
             return this.userManager.saveUser(user).thenApply(v -> {
                 this.messagingService.pushUserUpdate(user);
                 return user.getNodes();
