@@ -21,11 +21,12 @@ license {
 
 repositories {
     mavenCentral()
+    maven { url 'https://nexus.lucko.me/repository/maven-snapshots/' }
 }
 
 dependencies {
     compileOnly 'org.slf4j:slf4j-api:1.7.36'
-    compileOnly 'net.luckperms:api:5.4'
+    compileOnly 'net.luckperms:api:5.5-20231022.200451-2'
     implementation 'io.javalin:javalin:4.6.4'
     implementation 'io.javalin:javalin-openapi:4.6.4'
 }

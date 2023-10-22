@@ -44,6 +44,7 @@ import me.lucko.luckperms.extension.rest.util.StubMessagingService;
 import me.lucko.luckperms.extension.rest.util.SwaggerUi;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.messaging.MessagingService;
+import net.luckperms.api.platform.Health;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +115,11 @@ public class RestServer implements AutoCloseable {
 
     private void setupRoutes(Javalin app, LuckPerms luckPerms) {
         app.get("/", ctx -> ctx.redirect("/docs/swagger-ui"));
+
+        app.get("health", ctx -> {
+            Health health = luckPerms.runHealthCheck();
+            ctx.status(health.isHealthy() ? HttpCode.OK : HttpCode.SERVICE_UNAVAILABLE).json(health);
+        });
 
         MessagingService messagingService = luckPerms.getMessagingService().orElse(StubMessagingService.INSTANCE);
 

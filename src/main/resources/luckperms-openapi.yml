@@ -18,6 +18,8 @@ tags:
     description: API methods for LuckPerms groups.
   - name: Actions
     description: API methods for LuckPerms actions.
+  - name: Misc
+    description: Miscellaneous API methods.
 paths:
   /user:
     get:
@@ -1128,6 +1130,39 @@ paths:
       description: Submit a new action to the action logger.
       tags:
         - Actions
+  /health:
+    get:
+      summary: Get the current health status of the app
+      operationId: get-health
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              examples:
+                example-1:
+                  value:
+                    health: true
+                    details:
+                      storageConnected: true
+                      storagePing: 15
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              examples:
+                example-1:
+                  value:
+                    health: false
+                    details:
+                      reason: storage is disconnected
+      description: Returns the current health status of the app
+      tags:
+        - Misc
 components:
   schemas:
     Node:
@@ -1574,6 +1609,20 @@ components:
         - replace_existing_if_duration_longer
         - none
       default: 'none'
+    Health:
+      title: Health
+      type: object
+      description: The health status of the app
+      properties:
+        health:
+          type: boolean
+          description: if the app is healthy
+        details:
+          type: object
+          description: extra information about the healthcheck result
+      required:
+        - health
+        - details
   securitySchemes:
     apikey:
       type: http
