@@ -48,29 +48,34 @@ paths:
       summary: Create a new user
       operationId: create-user
       responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSaveResult'
+              examples:
+                example-1:
+                  value:
+                    outcomes:
+                      - username_updated
+                      - other_unique_ids_present_for_username
+                    previousUsername: Luck
+                    otherUniqueIds:
+                      - c1d60c50-70b5-4722-8057-87767557e50d
         '201':
           description: User created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/PlayerSaveResult'
               examples:
                 example-1:
                   value:
-                    uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
-                    username: Luck
-                    nodes:
-                      - key: group.default
-                        type: inheritance
-                        value: true
-                        context: []
-                    metadata:
-                      meta: {}
-                      primaryGroup: default
+                    outcomes:
+                      - clean_insert
         '400':
           description: Missing required information
-        '409':
-          description: User already exists
       requestBody:
         content:
           application/json:
@@ -1776,6 +1781,38 @@ components:
       required:
         - health
         - details
+    PlayerSaveResult:
+      title: PlayerSaveResult
+      type: object
+      description: The result of an operation to save data about a player
+      properties:
+        outcomes:
+          type: array
+          description: if the app is healthy
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PlayerSaveResultOutcome'
+        previousUsername:
+          type: string
+          description: the previous username involved in the result (only applies for the username_updated outcome)
+          minLength: 1
+          example: Luck
+        otherUniqueIds:
+          type: array
+          description: the other unique ids involved in the result (only applies for the other_unique_ids_present_for_username outcome)
+          items:
+            $ref: '#/components/schemas/UniqueId'
+      required:
+        - outcomes
+    PlayerSaveResultOutcome:
+      title: PlayerSaveResultOutcome
+      type: string
+      enum:
+        - clean_insert
+        - no_change
+        - username_updated
+        - other_unique_ids_present_for_username
+      description: The statuses returned in a PlayerSaveResult
   securitySchemes:
     apikey:
       type: http

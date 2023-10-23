@@ -100,21 +100,12 @@ public class UserController implements PermissionHolderController {
     public void create(Context ctx) {
         CreateReq body = ctx.bodyAsClass(CreateReq.class);
 
-        CompletableFuture<User> future = this.userManager.savePlayerData(body.uniqueId, body.username)
-                .thenCompose(result -> {
-                    if (result.includes(PlayerSaveResult.Outcome.CLEAN_INSERT)) {
-                        return this.userManager.loadUser(body.uniqueId, body.username);
-                    } else {
-                        return CompletableFuture.completedFuture(null);
-                    }
-                });
-
+        CompletableFuture<PlayerSaveResult> future = this.userManager.savePlayerData(body.uniqueId, body.username);
         ctx.future(future, result -> {
-            if (result == null) {
-                ctx.status(409).result("User already exists!");
-            } else {
-                ctx.status(201).json(result);
+            if (((PlayerSaveResult) result).includes(PlayerSaveResult.Outcome.CLEAN_INSERT)) {
+                ctx.status(201);
             }
+            ctx.json(result);
         });
     }
 
