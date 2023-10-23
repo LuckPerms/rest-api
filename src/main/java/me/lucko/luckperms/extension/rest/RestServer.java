@@ -38,6 +38,7 @@ import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
 import me.lucko.luckperms.extension.rest.controller.ActionController;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
 import me.lucko.luckperms.extension.rest.controller.PermissionHolderController;
+import me.lucko.luckperms.extension.rest.controller.TrackController;
 import me.lucko.luckperms.extension.rest.controller.UserController;
 import me.lucko.luckperms.extension.rest.util.CustomObjectMapper;
 import me.lucko.luckperms.extension.rest.util.StubMessagingService;
@@ -125,6 +126,7 @@ public class RestServer implements AutoCloseable {
 
         UserController userController = new UserController(luckPerms.getUserManager(), luckPerms.getTrackManager(), messagingService, this.objectMapper);
         GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
+        TrackController trackController = new TrackController(luckPerms.getTrackManager(), luckPerms.getGroupManager(), messagingService, this.objectMapper);
         ActionController actionController = new ActionController(luckPerms.getActionLogger());
 
         app.routes(() -> {
@@ -135,8 +137,11 @@ public class RestServer implements AutoCloseable {
             path("group", () -> {
                 setupControllerRoutes(groupController);
             });
+            path("track", () -> {
+                setupControllerRoutes(trackController);
+            });
             path("action", () -> {
-                post(actionController::submit);
+                setupControllerRoutes(actionController);
             });
         });
     }
@@ -170,6 +175,21 @@ public class RestServer implements AutoCloseable {
             post("promote", controller::promote);
             post("demote", controller::demote);
         });
+    }
+
+    private void setupControllerRoutes(TrackController controller) {
+        post(controller::create);
+        get(controller::getAll);
+
+        path("{id}", () -> {
+            get(controller::get);
+            patch(controller::update);
+            delete(controller::delete);
+        });
+    }
+
+    private void setupControllerRoutes(ActionController controller) {
+        post(controller::submit);
     }
 
     private void setupAuth(JavalinConfig config) {

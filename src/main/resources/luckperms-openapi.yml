@@ -16,6 +16,8 @@ tags:
     description: API methods for LuckPerms users.
   - name: Groups
     description: API methods for LuckPerms groups.
+  - name: Tracks
+    description: API methods for LuckPerms tracks.
   - name: Actions
     description: API methods for LuckPerms actions.
   - name: Misc
@@ -666,7 +668,7 @@ paths:
                 type: array
                 uniqueItems: true
                 items:
-                  $ref: '#/components/schemas/Name'
+                  $ref: '#/components/schemas/GroupName'
               examples:
                 example-1:
                   value:
@@ -773,11 +775,10 @@ paths:
           description: Search for nodes with a type equal to
   '/group/{name}':
     parameters:
-      - $ref: '#/components/parameters/name'
+      - $ref: '#/components/parameters/groupName'
     get:
       summary: Get a groups data
-      tags:
-        - Groups
+      operationId: get-group
       responses:
         '200':
           description: Ok
@@ -808,10 +809,9 @@ paths:
                       primaryGroup: admin
         '404':
           description: Group doesn't exist
-      operationId: get-group
-      parameters:
-        - $ref: '#/components/parameters/name'
       description: Get a group
+      tags:
+        - Groups
     delete:
       summary: Delete a group
       operationId: delete-group
@@ -825,7 +825,7 @@ paths:
         - Groups
   '/group/{name}/nodes':
     parameters:
-      - $ref: '#/components/parameters/name'
+      - $ref: '#/components/parameters/groupName'
     get:
       summary: Get a groups nodes (permissions data)
       tags:
@@ -1006,7 +1006,7 @@ paths:
           If the request body is empty, all nodes will be deleted.
   '/group/{name}/meta':
     parameters:
-      - $ref: '#/components/parameters/name'
+      - $ref: '#/components/parameters/groupName'
     get:
       summary: Get a groups metadata
       tags:
@@ -1033,7 +1033,7 @@ paths:
       description: Get the groups metadata
   '/group/{name}/permissionCheck':
     parameters:
-      - $ref: '#/components/parameters/name'
+      - $ref: '#/components/parameters/groupName'
     get:
       summary: Run a permission check against a group
       tags:
@@ -1113,6 +1113,131 @@ paths:
                     contexts:
                       - key: server
                         value: survival
+  /track:
+    get:
+      summary: Get all existing tracks
+      operationId: get-tracks
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: true
+                items:
+                  $ref: '#/components/schemas/TrackName'
+              examples:
+                example-1:
+                  value:
+                    - staff
+      description: Get all known tracks
+      tags:
+        - Tracks
+    post:
+      summary: Create a new track
+      operationId: create-track
+      responses:
+        '201':
+          description: Track created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Track'
+              examples:
+                example-1:
+                  value:
+                    name: staff
+                    groups:
+                      - moderator
+                      - admin
+                      - owner
+        '400':
+          description: Missing required information
+        '409':
+          description: Track already exists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTrack'
+            examples:
+              example-1:
+                value:
+                  name: staff
+        description: ''
+      description: Create a new track.
+      tags:
+        - Tracks
+  '/track/{name}':
+    parameters:
+      - $ref: '#/components/parameters/trackName'
+    get:
+      summary: Get a tracks data
+      operationId: get-track
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Track'
+              examples:
+                example-1:
+                  value:
+                    name: staff
+                    groups:
+                      - moderator
+                      - admin
+                      - owner
+        '404':
+          description: Track doesn't exist
+      description: Get a track
+      tags:
+        - Tracks
+    patch:
+      summary: Update a track
+      operationId: patch-track
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Missing required information
+        '404':
+          description: Track doesn't exist
+      description: Update a track
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - properties:
+                    groups:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/GroupName'
+              type: object
+            examples:
+              example-1:
+                value:
+                  groups:
+                    - moderator
+                    - admin
+                    - owner
+        description: ''
+      tags:
+        - Tracks
+    delete:
+      summary: Delete a track
+      operationId: delete-track
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Track doesn't exist
+      description: Delete a track
+      tags:
+        - Tracks
   /action:
     post:
       summary: Submit a new action
@@ -1264,7 +1389,7 @@ components:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/GroupName'
         displayName:
           type: string
           minLength: 1
@@ -1279,12 +1404,33 @@ components:
         - name
         - nodes
         - metadata
+    Track:
+      title: Track
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/GroupName'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupName'
+      required:
+        - name
+        - groups
     NewGroup:
       title: NewGroup
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/GroupName'
+      required:
+        - name
+    NewTrack:
+      title: NewTrack
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/GroupName'
       required:
         - name
     User:
@@ -1300,7 +1446,7 @@ components:
         parentGroups:
           type: array
           items:
-            $ref: '#/components/schemas/Name'
+            $ref: '#/components/schemas/GroupName'
         nodes:
           $ref: '#/components/schemas/NodeMap'
         metadata:
@@ -1362,11 +1508,18 @@ components:
       example: c1d60c50-70b5-4722-8057-87767557e50d
       format: uuid
       pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-    Name:
+    GroupName:
       type: string
       title: Name
       description: A group name
       example: admin
+      pattern: '^[a-z0-9]+$'
+      minLength: 1
+    TrackName:
+      type: string
+      title: Name
+      description: A group name
+      example: staff
       pattern: '^[a-z0-9]+$'
       minLength: 1
     PermissionCheckResult:
@@ -1596,7 +1749,7 @@ components:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/Name'
+          $ref: '#/components/schemas/GroupName'
         results:
           $ref: '#/components/schemas/NodeMap'
       description: ''
@@ -1634,22 +1787,23 @@ components:
       name: uniqueId
       in: path
       schema:
-        type: string
-        format: uuid
-        pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-        example: c1d60c50-70b5-4722-8057-87767557e50d
+        $ref: '#/components/schemas/UniqueId'
       required: true
       description: A player unique id (UUID)
-    name:
-      name: name
+    groupName:
+      name: groupName
       in: path
       schema:
-        type: string
-        example: admin
-        pattern: '^[a-z0-9]+$'
-        minLength: 1
+        $ref: '#/components/schemas/GroupName'
       required: true
       description: A group name
+    trackName:
+      name: trackName
+      in: path
+      schema:
+        $ref: '#/components/schemas/TrackName'
+      required: true
+      description: A track name
     temporaryNodeMergeStrategy:
       name: temporaryNodeMergeStrategy
       in: query

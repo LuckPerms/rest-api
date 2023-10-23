@@ -40,6 +40,7 @@ import me.lucko.luckperms.extension.rest.bind.NodeDeserializer;
 import me.lucko.luckperms.extension.rest.bind.NodeSerializer;
 import me.lucko.luckperms.extension.rest.bind.PromotionResultSerializer;
 import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
+import me.lucko.luckperms.extension.rest.bind.TrackSerializer;
 import me.lucko.luckperms.extension.rest.bind.UserSerializer;
 import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.cacheddata.CachedMetaData;
@@ -51,6 +52,7 @@ import net.luckperms.api.platform.Health;
 import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.DemotionResult;
 import net.luckperms.api.track.PromotionResult;
+import net.luckperms.api.track.Track;
 
 public class CustomObjectMapper extends ObjectMapper {
 
@@ -72,6 +74,7 @@ public class CustomObjectMapper extends ObjectMapper {
         module.addSerializer(Node.class, new NodeSerializer());
         module.addSerializer(PromotionResult.class, new PromotionResultSerializer());
         module.addDeserializer(QueryOptions.class, new QueryOptionsDeserializer());
+        module.addSerializer(Track.class, new TrackSerializer());
         module.addSerializer(User.class, new UserSerializer());
         this.registerModule(module);
     }
