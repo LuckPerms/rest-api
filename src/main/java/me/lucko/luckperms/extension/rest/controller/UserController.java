@@ -258,9 +258,16 @@ public class UserController implements PermissionHolderController {
         UUID uniqueId = pathParamAsUuid(ctx);
         Node node = ctx.bodyAsClass(Node.class);
         TemporaryNodeMergeStrategy mergeStrategy = ParamUtils.queryParamAsTemporaryNodeMergeStrategy(this.objectMapper, ctx);
+        boolean replace = ParamUtils.readBoolean(ctx, "replace", false);
 
         CompletableFuture<Collection<Node>> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
-            user.data().add(node, mergeStrategy);
+            if (replace) {
+                user.data().remove(node);
+                user.data().add(node);
+            } else {
+                user.data().add(node, mergeStrategy);
+            }
+
             return this.userManager.saveUser(user).thenApply(v -> {
                 this.messagingService.pushUserUpdate(user);
                 return user.getNodes();

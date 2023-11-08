@@ -47,4 +47,18 @@ public final class ParamUtils {
             return objectMapper.readValue("\"" + string + "\"", TemporaryNodeMergeStrategy.class);
         }
     }
+
+    public static boolean readBoolean(Context ctx, String name, boolean defaultIfMissing) {
+        final String string = ctx.queryParam(name);
+
+        if (string == null) {
+            return defaultIfMissing;
+        } else if (string.equals("true")) {
+            return true;
+        } else if (string.equals("false")) {
+            return false;
+        } else {
+            throw new IllegalArgumentException("invalid boolean '" + string + "' for query param '" + name + "'");
+        }
+    }
 }
