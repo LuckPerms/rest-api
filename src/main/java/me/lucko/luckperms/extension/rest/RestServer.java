@@ -36,6 +36,7 @@ import io.javalin.http.HttpCode;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
 import me.lucko.luckperms.extension.rest.controller.ActionController;
+import me.lucko.luckperms.extension.rest.controller.EventController;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
 import me.lucko.luckperms.extension.rest.controller.PermissionHolderController;
 import me.lucko.luckperms.extension.rest.controller.TrackController;
@@ -58,6 +59,7 @@ import static io.javalin.apibuilder.ApiBuilder.patch;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
+import static io.javalin.apibuilder.ApiBuilder.sse;
 
 /**
  * An HTTP server that implements a REST API for LuckPerms.
@@ -67,6 +69,7 @@ public class RestServer implements AutoCloseable {
 
     private final ObjectMapper objectMapper;
     private final Javalin app;
+    private final AutoCloseable routesClosable;
 
     public RestServer(LuckPerms luckPerms, int port) {
         LOGGER.info("[REST] Starting server...");
@@ -78,13 +81,18 @@ public class RestServer implements AutoCloseable {
 
         this.setupLogging(this.app);
         this.setupErrorHandlers(this.app);
-        this.setupRoutes(this.app, luckPerms);
+        this.routesClosable = this.setupRoutes(this.app, luckPerms);
 
         LOGGER.info("[REST] Startup complete! Listening on http://localhost:" + port);
     }
 
     @Override
     public void close() {
+        try {
+            this.routesClosable.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         this.app.close();
     }
 
@@ -114,7 +122,7 @@ public class RestServer implements AutoCloseable {
         });
     }
 
-    private void setupRoutes(Javalin app, LuckPerms luckPerms) {
+    private AutoCloseable setupRoutes(Javalin app, LuckPerms luckPerms) {
         app.get("/", ctx -> ctx.redirect("/docs/swagger-ui"));
 
         app.get("health", ctx -> {
@@ -128,22 +136,20 @@ public class RestServer implements AutoCloseable {
         GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
         TrackController trackController = new TrackController(luckPerms.getTrackManager(), luckPerms.getGroupManager(), messagingService, this.objectMapper);
         ActionController actionController = new ActionController(luckPerms.getActionLogger());
+        EventController eventController = new EventController(luckPerms.getEventBus());
 
         app.routes(() -> {
             path("user", () -> {
                 get("lookup", userController::lookup);
                 setupControllerRoutes(userController);
             });
-            path("group", () -> {
-                setupControllerRoutes(groupController);
-            });
-            path("track", () -> {
-                setupControllerRoutes(trackController);
-            });
-            path("action", () -> {
-                setupControllerRoutes(actionController);
-            });
+            path("group", () -> setupControllerRoutes(groupController));
+            path("track", () -> setupControllerRoutes(trackController));
+            path("action", () -> setupControllerRoutes(actionController));
+            path("event", () -> setupControllerRoutes(eventController));
         });
+
+        return eventController;
     }
 
     private void setupControllerRoutes(PermissionHolderController controller) {
@@ -192,6 +198,14 @@ public class RestServer implements AutoCloseable {
         post(controller::submit);
     }
 
+    private void setupControllerRoutes(EventController controller) {
+        sse("log-broadcast", controller::logBroadcast);
+        sse("post-network-sync", controller::postNetworkSync);
+        sse("post-sync", controller::postSync);
+        sse("pre-network-sync", controller::preNetworkSync);
+        sse("pre-sync", controller::preSync);
+    }
+
     private void setupAuth(JavalinConfig config) {
         if (RestConfig.getBoolean("auth", false)) {
             Set<String> keys = ImmutableSet.copyOf(
@@ -237,7 +251,12 @@ public class RestServer implements AutoCloseable {
     }
 
     private void setupLogging(Javalin app) {
-        app.before(ctx -> ctx.attribute("startTime", System.currentTimeMillis()));
+        app.before(ctx -> {
+            ctx.attribute("startTime", System.currentTimeMillis());
+            if (ctx.path().startsWith("/event/")) {
+                LOGGER.info("[REST] %s %s - %d".formatted(ctx.method(), ctx.path(), ctx.status()));
+            }
+        });
         app.after(ctx -> {
             //noinspection ConstantConditions
             long startTime = ctx.attribute("startTime");
