@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import me.lucko.luckperms.extension.rest.bind.ActionDeserializer;
+import me.lucko.luckperms.extension.rest.bind.ActionSerializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetDeserializer;
 import me.lucko.luckperms.extension.rest.bind.ContextSetSerializer;
 import me.lucko.luckperms.extension.rest.bind.DemotionResultSerializer;
@@ -43,9 +44,19 @@ import me.lucko.luckperms.extension.rest.bind.PromotionResultSerializer;
 import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
 import me.lucko.luckperms.extension.rest.bind.TrackSerializer;
 import me.lucko.luckperms.extension.rest.bind.UserSerializer;
+import me.lucko.luckperms.extension.rest.bind.event.LogBroadcastEventSerializer;
+import me.lucko.luckperms.extension.rest.bind.event.PostNetworkSyncEventSerializer;
+import me.lucko.luckperms.extension.rest.bind.event.PostSyncEventSerializer;
+import me.lucko.luckperms.extension.rest.bind.event.PreNetworkSyncEventSerializer;
+import me.lucko.luckperms.extension.rest.bind.event.PreSyncEventSerializer;
 import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;
+import net.luckperms.api.event.log.LogBroadcastEvent;
+import net.luckperms.api.event.sync.PostNetworkSyncEvent;
+import net.luckperms.api.event.sync.PostSyncEvent;
+import net.luckperms.api.event.sync.PreNetworkSyncEvent;
+import net.luckperms.api.event.sync.PreSyncEvent;
 import net.luckperms.api.model.PlayerSaveResult;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
@@ -66,6 +77,7 @@ public class CustomObjectMapper extends ObjectMapper {
 
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Action.class, new ActionDeserializer());
+        module.addSerializer(Action.class, new ActionSerializer());
         module.addDeserializer(ContextSet.class, new ContextSetDeserializer());
         module.addSerializer(ContextSet.class, new ContextSetSerializer());
         module.addSerializer(DemotionResult.class, new DemotionResultSerializer());
@@ -79,6 +91,13 @@ public class CustomObjectMapper extends ObjectMapper {
         module.addDeserializer(QueryOptions.class, new QueryOptionsDeserializer());
         module.addSerializer(Track.class, new TrackSerializer());
         module.addSerializer(User.class, new UserSerializer());
+
+        module.addSerializer(LogBroadcastEvent.class, new LogBroadcastEventSerializer());
+        module.addSerializer(PostNetworkSyncEvent.class, new PostNetworkSyncEventSerializer());
+        module.addSerializer(PostSyncEvent.class, new PostSyncEventSerializer());
+        module.addSerializer(PreNetworkSyncEvent.class, new PreNetworkSyncEventSerializer());
+        module.addSerializer(PreSyncEvent.class, new PreSyncEventSerializer());
+
         this.registerModule(module);
     }
 

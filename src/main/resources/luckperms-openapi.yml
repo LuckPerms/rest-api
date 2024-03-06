@@ -18,6 +18,8 @@ tags:
     description: API methods for LuckPerms groups.
   - name: Tracks
     description: API methods for LuckPerms tracks.
+  - name: Events
+    description: API methods for LuckPerms events.
   - name: Actions
     description: API methods for LuckPerms actions.
   - name: Misc
@@ -1260,6 +1262,161 @@ paths:
       description: Submit a new action to the action logger.
       tags:
         - Actions
+  /event/log-broadcast:
+    get:
+      summary: Subscribe to the LogBroadcastEvent
+      operationId: get-event-log-broadcast
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [message]
+                    data:
+                      $ref: '#/components/schemas/LogBroadcastEvent'
+                  required:
+                    - event
+                    - data
+              examples:
+                example-1:
+                  value: |
+                    event: message
+                    data: '{"entry":{"timestamp":1658428395,"source":{"uniqueId":"c1d60c50-70b5-4722-8057-87767557e50d","name":"Luck"},"target":{"uniqueId":"c1d60c50-70b5-4722-8057-87767557e50d","name":"Luck","type":"user"},"description":"permission set minecraft.command.ban true"},"origin":"local"}'
+      description: Subscribes to the LogBroadcastEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+      tags:
+        - Events
+  /event/post-network-sync:
+    get:
+      summary: Subscribe to the PostNetworkSyncEvent
+      operationId: get-event-post-network-sync
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [message]
+                    data:
+                      $ref: '#/components/schemas/PostNetworkSyncEvent'
+                  required:
+                    - event
+                    - data
+              examples:
+                example-1:
+                  value: |
+                    event: message
+                    data: '{"syncId":"8ff071c2-f772-4c16-a5d2-17a401d4e2f1","type":"specific_user","didSyncOccur":true,"specificUserUniqueId":"c1d60c50-70b5-4722-8057-87767557e50d"}'
+      description: Subscribes to the PostNetworkSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+      tags:
+        - Events
+  /event/post-sync:
+    get:
+      summary: Subscribe to the PostSyncEvent
+      operationId: get-event-post-sync
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [message]
+                    data:
+                      $ref: '#/components/schemas/PostSyncEvent'
+                  required:
+                    - event
+                    - data
+              examples:
+                example-1:
+                  value: |
+                    event: message
+                    data: '{}'
+      description: Subscribes to the PostSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+      tags:
+        - Events
+  /event/pre-network-sync:
+    get:
+      summary: Subscribe to the PreNetworkSyncEvent
+      operationId: get-event-pre-network-sync
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [message]
+                    data:
+                      $ref: '#/components/schemas/PreNetworkSyncEvent'
+                  required:
+                    - event
+                    - data
+              examples:
+                example-1:
+                  value: |
+                    event: message
+                    data: '{"syncId":"8ff071c2-f772-4c16-a5d2-17a401d4e2f1","type":"specific_user","specificUserUniqueId":"c1d60c50-70b5-4722-8057-87767557e50d"}'
+      description: Subscribes to the PreNetworkSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+      tags:
+        - Events
+  /event/pre-sync:
+    get:
+      summary: Subscribe to the PreSyncEvent
+      operationId: get-event-pre-sync
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [message]
+                    data:
+                      $ref: '#/components/schemas/PreSyncEvent'
+                  required:
+                    - event
+                    - data
+              examples:
+                example-1:
+                  value: |
+                    event: message
+                    data: '{}'
+      description: Subscribes to the PreSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+      tags:
+        - Events
   /health:
     get:
       summary: Get the current health status of the app
@@ -1813,6 +1970,102 @@ components:
         - username_updated
         - other_unique_ids_present_for_username
       description: The statuses returned in a PlayerSaveResult
+    LogBroadcastEvent:
+      title: LogBroadcastEvent
+      type: object
+      description: Called when a log entry is about to be sent to notifiable players on the platform
+      properties:
+        entry:
+          $ref: '#/components/schemas/Action'
+        origin:
+          $ref: '#/components/schemas/LogBroadcastEventOrigin'
+      required:
+        - entry
+        - origin
+      x-examples:
+        example-1:
+          entry:
+            timestamp: 1658428395
+            source:
+              uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+              name: Luck
+            target:
+              uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+              name: Luck
+              type: user
+            description: permission set minecraft.command.ban true
+          origin: local
+    LogBroadcastEventOrigin:
+      title: LogBroadcastEventOrigin
+      type: string
+      enum:
+        - local
+        - local_api
+        - remote
+      description: Represents where a log entry is from
+    SyncType:
+      title: SyncType
+      type: string
+      description: Represents the type of synchronisation task
+      enum:
+        - full
+        - specific_user
+    PostNetworkSyncEvent:
+      title: PostNetworkSyncEvent
+      type: object
+      description: Called after a network synchronisation task has been completed
+      required:
+        - syncId
+        - type
+        - didSyncOccur
+      properties:
+        syncId:
+          $ref: '#/components/schemas/UniqueId'
+        type:
+          $ref: '#/components/schemas/SyncType'
+        didSyncOccur:
+          type: boolean
+        specificUserUniqueId:
+          $ref: '#/components/schemas/UniqueId'
+      x-examples:
+        example-1:
+          syncId: 8ff071c2-f772-4c16-a5d2-17a401d4e2f1
+          type: specific_user
+          didSyncOccur: true
+          specificUserUniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+    PostSyncEvent:
+      title: PostSyncEvent
+      type: object
+      description: Called after a full synchronisation task has been completed
+      properties: {}
+      x-examples:
+        example-1: {}
+    PreNetworkSyncEvent:
+      title: PreNetworkSyncEvent
+      type: object
+      description: Called after a request for synchronisation has been received via the messaging service, but before it has actually been completed
+      required:
+        - syncId
+        - type
+      properties:
+        syncId:
+          $ref: '#/components/schemas/UniqueId'
+        type:
+          $ref: '#/components/schemas/SyncType'
+        specificUserUniqueId:
+          $ref: '#/components/schemas/UniqueId'
+      x-examples:
+        example-1:
+          syncId: 8ff071c2-f772-4c16-a5d2-17a401d4e2f1
+          type: specific_user
+          specificUserUniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+    PreSyncEvent:
+      title: PreSyncEvent
+      type: object
+      description: Called just before a full synchronisation task runs
+      properties: {}
+      x-examples:
+        example-1: {}
   securitySchemes:
     apikey:
       type: http
