@@ -325,6 +325,7 @@ paths:
       operationId: add-user-node
       parameters:
         - $ref: '#/components/parameters/temporaryNodeMergeStrategy'
+        - $ref: '#/components/parameters/replace'
       responses:
         '200':
           description: Ok - returns the updated nodes
@@ -864,6 +865,7 @@ paths:
       operationId: add-group-node
       parameters:
         - $ref: '#/components/parameters/temporaryNodeMergeStrategy'
+        - $ref: '#/components/parameters/replace'
       responses:
         '200':
           description: Ok - returns the updated nodes
@@ -2101,5 +2103,12 @@ components:
         $ref: '#/components/schemas/TemporaryNodeMergeStrategy'
       required: false
       description: The node merge strategy
+    replace:
+      name: replace
+      in: query
+      schema:
+        type: boolean
+      required: false
+      description: If the node should replace an existing node with the same key (delete and add)
 security:
   - apikey: []

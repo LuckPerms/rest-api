@@ -251,11 +251,19 @@ public class GroupController implements PermissionHolderController {
         String name = ctx.pathParam("id");
         Node node = ctx.bodyAsClass(Node.class);
         TemporaryNodeMergeStrategy mergeStrategy = ParamUtils.queryParamAsTemporaryNodeMergeStrategy(this.objectMapper, ctx);
+        boolean replace = ParamUtils.readBoolean(ctx, "replace", false);
 
         CompletableFuture<Collection<Node>> future = this.groupManager.loadGroup(name).thenCompose(opt -> {
             if (opt.isPresent()) {
                 Group group = opt.get();
-                group.data().add(node, mergeStrategy);
+
+                if (replace) {
+                    group.data().remove(node);
+                    group.data().add(node);
+                } else {
+                    group.data().add(node, mergeStrategy);
+                }
+
                 return this.groupManager.saveGroup(group).thenApply(v -> {
                     this.messagingService.pushUpdate();
                     return group.getNodes();
