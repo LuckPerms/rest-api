@@ -44,6 +44,7 @@ import me.lucko.luckperms.extension.rest.bind.PromotionResultSerializer;
 import me.lucko.luckperms.extension.rest.bind.QueryOptionsDeserializer;
 import me.lucko.luckperms.extension.rest.bind.TrackSerializer;
 import me.lucko.luckperms.extension.rest.bind.UserSerializer;
+import me.lucko.luckperms.extension.rest.bind.event.CustomMessageReceiveEventSerializer;
 import me.lucko.luckperms.extension.rest.bind.event.LogBroadcastEventSerializer;
 import me.lucko.luckperms.extension.rest.bind.event.PostNetworkSyncEventSerializer;
 import me.lucko.luckperms.extension.rest.bind.event.PostSyncEventSerializer;
@@ -53,6 +54,7 @@ import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.event.log.LogBroadcastEvent;
+import net.luckperms.api.event.messaging.CustomMessageReceiveEvent;
 import net.luckperms.api.event.sync.PostNetworkSyncEvent;
 import net.luckperms.api.event.sync.PostSyncEvent;
 import net.luckperms.api.event.sync.PreNetworkSyncEvent;
@@ -92,6 +94,7 @@ public class CustomObjectMapper extends ObjectMapper {
         module.addSerializer(Track.class, new TrackSerializer());
         module.addSerializer(User.class, new UserSerializer());
 
+        module.addSerializer(CustomMessageReceiveEvent.class, new CustomMessageReceiveEventSerializer());
         module.addSerializer(LogBroadcastEvent.class, new LogBroadcastEventSerializer());
         module.addSerializer(PostNetworkSyncEvent.class, new PostNetworkSyncEventSerializer());
         module.addSerializer(PostSyncEvent.class, new PostSyncEventSerializer());

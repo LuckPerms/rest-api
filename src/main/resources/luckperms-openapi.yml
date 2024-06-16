@@ -18,10 +18,12 @@ tags:
     description: API methods for LuckPerms groups.
   - name: Tracks
     description: API methods for LuckPerms tracks.
-  - name: Events
-    description: API methods for LuckPerms events.
   - name: Actions
     description: API methods for LuckPerms actions.
+  - name: Messaging
+    description: API methods for LuckPerms messaging.
+  - name: Events
+    description: API methods for LuckPerms events.
   - name: Misc
     description: Miscellaneous API methods.
 paths:
@@ -496,7 +498,7 @@ paths:
           description: User doesn't exist
       operationId: get-user-meta
       description: Get a users metadata
-  '/user/{uniqueId}/permissionCheck':
+  '/user/{uniqueId}/permission-check':
     parameters:
       - $ref: '#/components/parameters/uniqueId'
     get:
@@ -1038,7 +1040,7 @@ paths:
           description: Group doesn't exist
       operationId: get-group-meta
       description: Get the groups metadata
-  '/group/{name}/permissionCheck':
+  '/group/{name}/permission-check':
     parameters:
       - $ref: '#/components/parameters/groupName'
     get:
@@ -1262,6 +1264,49 @@ paths:
       description: Submit a new action to the action logger.
       tags:
         - Actions
+  /messaging/update:
+    post:
+      summary: Push an update via the messaging service
+      operationId: messaging-push-update
+      responses:
+        '202':
+          description: Accepted
+        '501':
+          description: Messaging service not supported
+      description: Push an update via the messaging service.
+      tags:
+        - Messaging
+  '/messaging/update/{uniqueId}':
+    parameters:
+      - $ref: '#/components/parameters/uniqueId'
+    post:
+      summary: Push a user update via the messaging service
+      operationId: messaging-push-user-update
+      responses:
+        '202':
+          description: Accepted
+        '501':
+          description: Messaging service not supported
+      description: Push a user update via the messaging service.
+      tags:
+        - Messaging
+  /messaging/custom:
+    post:
+      summary: Send a custom message via the messaging service
+      operationId: messaging-custom-message
+      responses:
+        '202':
+          description: Accepted
+        '501':
+          description: Messaging service not supported
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomMessage'
+      description: Send a custom message via the messaging service.
+      tags:
+        - Messaging
   /event/log-broadcast:
     get:
       summary: Subscribe to the LogBroadcastEvent
@@ -1415,6 +1460,37 @@ paths:
                     event: message
                     data: '{}'
       description: Subscribes to the PreSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
+      tags:
+        - Events
+  /event/custom-message-receive:
+    get:
+      summary: Subscribe to the CustomMessageReceiveEvent
+      operationId: get-event-custom-message-receive
+      responses:
+        '200':
+          description: Ok
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  type: object
+                  properties:
+                    event:
+                      type: string
+                      enum: [message]
+                    data:
+                      $ref: '#/components/schemas/CustomMessageReceiveEvent'
+                  required:
+                    - event
+                    - data
+              examples:
+                example-1:
+                  value: |
+                    event: message
+                    data: '{"channelId": "superranks:notifications", "payload": "custom payload message goes here"}'
+      description: Subscribes to the CustomMessageReceiveEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)
       tags:
         - Events
   /health:
@@ -1970,6 +2046,26 @@ components:
         - username_updated
         - other_unique_ids_present_for_username
       description: The statuses returned in a PlayerSaveResult
+    CustomMessage:
+      title: CustomMessage
+      type: object
+      description: A custom message to send via the messaging service
+      properties:
+        channelId:
+          type: string
+          example: superranks:notifications
+          minLength: 1
+        payload:
+          type: string
+          example: custom payload message goes here
+          minLength: 1
+      required:
+        - channelId
+        - payload
+      x-examples:
+        example-1:
+          channelId: superranks:notifications
+          payload: custom payload message goes here
     LogBroadcastEvent:
       title: LogBroadcastEvent
       type: object
@@ -2066,6 +2162,26 @@ components:
       properties: {}
       x-examples:
         example-1: {}
+    CustomMessageReceiveEvent:
+      title: CustomMessageReceiveEvent
+      type: object
+      description: Called when a custom payload message is received via the messaging service
+      properties:
+        channelId:
+          type: string
+          example: superranks:notifications
+          minLength: 1
+        payload:
+          type: string
+          example: custom payload message goes here
+          minLength: 1
+      required:
+        - channelId
+        - payload
+      x-examples:
+        example-1:
+          channelId: superranks:notifications
+          payload: custom payload message goes here
   securitySchemes:
     apikey:
       type: http

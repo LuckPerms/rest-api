@@ -38,6 +38,7 @@ import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
 import me.lucko.luckperms.extension.rest.controller.ActionController;
 import me.lucko.luckperms.extension.rest.controller.EventController;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
+import me.lucko.luckperms.extension.rest.controller.MessagingController;
 import me.lucko.luckperms.extension.rest.controller.PermissionHolderController;
 import me.lucko.luckperms.extension.rest.controller.TrackController;
 import me.lucko.luckperms.extension.rest.controller.UserController;
@@ -136,6 +137,7 @@ public class RestServer implements AutoCloseable {
         GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
         TrackController trackController = new TrackController(luckPerms.getTrackManager(), luckPerms.getGroupManager(), messagingService, this.objectMapper);
         ActionController actionController = new ActionController(luckPerms.getActionLogger());
+        MessagingController messagingController = new MessagingController(luckPerms.getMessagingService().orElse(null), luckPerms.getUserManager(), this.objectMapper);
         EventController eventController = new EventController(luckPerms.getEventBus());
 
         app.routes(() -> {
@@ -146,6 +148,7 @@ public class RestServer implements AutoCloseable {
             path("group", () -> setupControllerRoutes(groupController));
             path("track", () -> setupControllerRoutes(trackController));
             path("action", () -> setupControllerRoutes(actionController));
+            path("messaging", () -> setupControllerRoutes(messagingController));
             path("event", () -> setupControllerRoutes(eventController));
         });
 
@@ -173,7 +176,11 @@ public class RestServer implements AutoCloseable {
 
             get("meta", controller::metaGet);
 
-            path("permissionCheck", () -> {
+            path("permission-check", () -> {
+                get(controller::permissionCheck);
+                post(controller::permissionCheckCustom);
+            });
+            path("permissioncheck", () -> {
                 get(controller::permissionCheck);
                 post(controller::permissionCheckCustom);
             });
@@ -198,12 +205,21 @@ public class RestServer implements AutoCloseable {
         post(controller::submit);
     }
 
+    private void setupControllerRoutes(MessagingController controller) {
+        path("update", () -> {
+            post(controller::update);
+            post("{id}", controller::updateUser);
+        });
+        post("custom", controller::custom);
+    }
+
     private void setupControllerRoutes(EventController controller) {
         sse("log-broadcast", controller::logBroadcast);
         sse("post-network-sync", controller::postNetworkSync);
         sse("post-sync", controller::postSync);
         sse("pre-network-sync", controller::preNetworkSync);
         sse("pre-sync", controller::preSync);
+        sse("custom-message-receive", controller::customMessageReceive);
     }
 
     private void setupAuth(JavalinConfig config) {

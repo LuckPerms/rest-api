@@ -31,6 +31,7 @@ import net.luckperms.api.event.EventBus;
 import net.luckperms.api.event.EventSubscription;
 import net.luckperms.api.event.LuckPermsEvent;
 import net.luckperms.api.event.log.LogBroadcastEvent;
+import net.luckperms.api.event.messaging.CustomMessageReceiveEvent;
 import net.luckperms.api.event.sync.PostNetworkSyncEvent;
 import net.luckperms.api.event.sync.PostSyncEvent;
 import net.luckperms.api.event.sync.PreNetworkSyncEvent;
@@ -116,5 +117,9 @@ public class EventController implements AutoCloseable {
         handle(client, PreSyncEvent.class);
     }
 
+    // GET /custom-message-receive
+    public void customMessageReceive(SseClient client) {
+        handle(client, CustomMessageReceiveEvent.class);
+    }
 
 }

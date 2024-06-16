@@ -65,10 +65,10 @@ public interface PermissionHolderController {
     // GET /<type>/{id}/meta
     void metaGet(Context ctx) throws Exception;
 
-    // GET /<type>/{id}/permissionCheck
+    // GET /<type>/{id}/permission-check
     void permissionCheck(Context ctx) throws Exception;
 
-    // POST /<type>/{id}/permissionCheck
+    // POST /<type>/{id}/permission-check
     void permissionCheckCustom(Context ctx) throws Exception;
 
     // POST /<type>/{id}/promote

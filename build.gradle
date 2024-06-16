@@ -26,7 +26,7 @@ repositories {
 
 dependencies {
     compileOnly 'org.slf4j:slf4j-api:1.7.36'
-    compileOnly 'net.luckperms:api:5.5-20240218.224354-2'
+    compileOnly 'net.luckperms:api:5.5-20240307.193022-3'
     implementation 'io.javalin:javalin:4.6.4'
     implementation 'io.javalin:javalin-openapi:4.6.4'
 }

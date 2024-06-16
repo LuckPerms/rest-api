@@ -23,31 +23,29 @@
  *  SOFTWARE.
  */
 
-package me.lucko.luckperms.extension.rest.util;
+package me.lucko.luckperms.extension.rest.bind.event;
 
-import net.luckperms.api.messaging.MessagingService;
-import net.luckperms.api.model.user.User;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import net.luckperms.api.event.messaging.CustomMessageReceiveEvent;
 
-public class StubMessagingService implements MessagingService {
-    public static final StubMessagingService INSTANCE = new StubMessagingService();
+import java.io.IOException;
 
-    @Override
-    public String getName() {
-        return "stub";
-    }
+public class CustomMessageReceiveEventSerializer extends JsonSerializer<CustomMessageReceiveEvent> {
 
     @Override
-    public void pushUpdate() {
-
+    public void serialize(CustomMessageReceiveEvent value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        gen.writePOJO(Model.from(value));
     }
 
-    @Override
-    public void pushUserUpdate(User user) {
-
+    record Model(String channelId, String payload) {
+        static Model from(CustomMessageReceiveEvent event) {
+            return new Model(
+                    event.getChannelId(),
+                    event.getPayload()
+            );
+        }
     }
 
-    @Override
-    public void sendCustomMessage(String channelId, String payload) {
-
-    }
 }
