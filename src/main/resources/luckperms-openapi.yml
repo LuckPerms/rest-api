@@ -1248,6 +1248,89 @@ paths:
       tags:
         - Tracks
   /action:
+    get:
+      summary: Query actions
+      operationId: get-actions
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Action'
+                  overallSize:
+                    type: integer
+              examples:
+                example-1:
+                  value:
+                    entries:
+                      - timestamp: 1658428395
+                        source:
+                          uniqueId: c1d60c50-70b5-4722-8057-87767557e50d
+                          name: Luck
+                        target:
+                          uniqueId: 069a79f4-44e9-4726-a5be-fca90e38aaf5
+                          name: Notch
+                          type: user
+                        description: permission set minecraft.command.ban true
+                    overallSize: 1
+        '400':
+          description: Missing required information
+      description: |
+        Query actions from the action logger.
+        
+        If pageSize or pageNumber are specified, both must be specified.
+        If neither are specified, no pagination will be used and all results will be returned.
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+          in: query
+          name: pageSize
+          description: The number of actions to return on each page
+        - schema:
+            type: integer
+            minimum: 1
+          in: query
+          name: pageNumber
+          description: The page to return
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: source
+          description: Filter by source user unique id
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: user
+          description: Filter by target user unique id
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: group
+          description: Filter by target group name
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: track
+          description: Filter by target track name
+        - schema:
+            type: string
+            minLength: 1
+          in: query
+          name: search
+          description: Filter by search value in source name, target name or description.
+      tags:
+        - Actions
     post:
       summary: Submit a new action
       operationId: submit-action

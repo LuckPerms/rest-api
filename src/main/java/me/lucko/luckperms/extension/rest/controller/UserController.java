@@ -297,7 +297,7 @@ public class UserController implements PermissionHolderController {
         ctx.future(future);
     }
 
-    // GET /user/{id}/permissionCheck
+    // GET /user/{id}/permission-check
     @Override
     public void permissionCheck(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
@@ -313,7 +313,7 @@ public class UserController implements PermissionHolderController {
         ctx.future(future);
     }
 
-    // POST /user/{id}/permissionCheck
+    // POST /user/{id}/permission-check
     @Override
     public void permissionCheckCustom(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);

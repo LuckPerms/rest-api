@@ -320,7 +320,7 @@ public class GroupController implements PermissionHolderController {
         });
     }
 
-    // GET /group/{id}/permissionCheck
+    // GET /group/{id}/permission-check
     @Override
     public void permissionCheck(Context ctx) {
         String name = ctx.pathParam("id");
@@ -340,7 +340,7 @@ public class GroupController implements PermissionHolderController {
         });
     }
 
-    // POST /group/{id}/permissionCheck
+    // POST /group/{id}/permission-check
     @Override
     public void permissionCheckCustom(Context ctx) {
         String name = ctx.pathParam("id");

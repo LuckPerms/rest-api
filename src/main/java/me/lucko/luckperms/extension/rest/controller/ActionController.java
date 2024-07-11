@@ -25,18 +25,51 @@
 
 package me.lucko.luckperms.extension.rest.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.Context;
+import me.lucko.luckperms.extension.rest.model.ActionPage;
+import me.lucko.luckperms.extension.rest.model.ActionRequest;
 import net.luckperms.api.actionlog.Action;
 import net.luckperms.api.actionlog.ActionLogger;
+import net.luckperms.api.actionlog.filter.ActionFilter;
 
 import java.util.concurrent.CompletableFuture;
 
 public class ActionController {
 
     private final ActionLogger actionLogger;
+    private final ObjectMapper objectMapper;
 
-    public ActionController(ActionLogger actionLogger) {
+    public ActionController(ActionLogger actionLogger, ObjectMapper objectMapper) {
         this.actionLogger = actionLogger;
+        this.objectMapper = objectMapper;
+    }
+
+    // GET /action
+    public void get(Context ctx) throws JsonProcessingException {
+        ActionFilter filter = ActionRequest.parseFilter(this.objectMapper, ctx);
+
+        Integer pageSize = ctx.queryParamAsClass("pageSize", Integer.class).getOrDefault(null);
+        Integer pageNumber = ctx.queryParamAsClass("pageNumber", Integer.class).getOrDefault(null);
+
+        if (pageSize == null && pageNumber == null) {
+            CompletableFuture<ActionPage> future = this.actionLogger.queryActions(filter)
+                    .thenApply(list -> new ActionPage(list, list.size()));
+            ctx.future(future);
+        } else {
+            if (pageSize == null) {
+                ctx.status(400).result("pageSize query parameter is required when pageNumber is provided");
+                return;
+            } else if (pageNumber == null) {
+                ctx.status(400).result("pageNumber query parameter is required when pageSize is provided");
+                return;
+            }
+
+            CompletableFuture<ActionPage> future = this.actionLogger.queryActions(filter, pageSize, pageNumber)
+                    .thenApply(ActionPage::from);
+            ctx.future(future);
+        }
     }
 
     // POST /action

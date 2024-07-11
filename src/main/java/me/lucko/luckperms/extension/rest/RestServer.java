@@ -136,7 +136,7 @@ public class RestServer implements AutoCloseable {
         UserController userController = new UserController(luckPerms.getUserManager(), luckPerms.getTrackManager(), messagingService, this.objectMapper);
         GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
         TrackController trackController = new TrackController(luckPerms.getTrackManager(), luckPerms.getGroupManager(), messagingService, this.objectMapper);
-        ActionController actionController = new ActionController(luckPerms.getActionLogger());
+        ActionController actionController = new ActionController(luckPerms.getActionLogger(), this.objectMapper);
         MessagingController messagingController = new MessagingController(luckPerms.getMessagingService().orElse(null), luckPerms.getUserManager(), this.objectMapper);
         EventController eventController = new EventController(luckPerms.getEventBus());
 
@@ -202,6 +202,7 @@ public class RestServer implements AutoCloseable {
     }
 
     private void setupControllerRoutes(ActionController controller) {
+        get(controller::get);
         post(controller::submit);
     }
 
