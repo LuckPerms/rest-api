@@ -189,12 +189,21 @@ public class UserController implements PermissionHolderController {
     @Override
     public void delete(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        CompletableFuture<Void> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
-            user.data().clear();
-            return this.userManager.saveUser(user).thenRun(() -> {
-                this.messagingService.pushUserUpdate(user);
+        boolean playerDataOnly = ctx.queryParamAsClass("playerDataOnly", Boolean.class).getOrDefault(false);
+
+        CompletableFuture<Void> future;
+        if (playerDataOnly) {
+            future = this.userManager.deletePlayerData(uniqueId);
+        } else {
+            future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
+                user.data().clear();
+                return this.userManager.saveUser(user).thenCompose(ignored -> {
+                    this.messagingService.pushUserUpdate(user);
+                    return this.userManager.deletePlayerData(uniqueId);
+                });
             });
-        });
+        }
+
         ctx.future(future, result -> ctx.result("ok"));
     }
 
@@ -240,7 +249,7 @@ public class UserController implements PermissionHolderController {
                 ? null
                 : this.objectMapper.readValue(ctx.body(), new TypeReference<>(){});
 
-        CompletableFuture<?> future = this.userManager.modifyUser(uniqueId, user -> {
+        CompletableFuture<?> future = this.userManager.loadUser(uniqueId).thenCompose(user -> {
             if (nodes == null) {
                 user.data().clear();
             } else {
@@ -248,6 +257,10 @@ public class UserController implements PermissionHolderController {
                     user.data().remove(node);
                 }
             }
+            return this.userManager.saveUser(user).thenApply(v -> {
+                this.messagingService.pushUserUpdate(user);
+                return user.getNodes();
+            });
         });
         ctx.future(future, result -> ctx.result("ok"));
     }

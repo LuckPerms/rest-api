@@ -287,6 +287,13 @@ paths:
         '404':
           description: User doesn't exist
       description: Delete a user
+      parameters:
+        - schema:
+            type: boolean
+          in: query
+          name: playerDataOnly
+          description: if only player data should be deleted
+          required: false
       tags:
         - Users
   '/user/{uniqueId}/nodes':
