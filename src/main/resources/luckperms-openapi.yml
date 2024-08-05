@@ -789,7 +789,7 @@ paths:
           in: query
           name: type
           description: Search for nodes with a type equal to
-  '/group/{name}':
+  '/group/{groupName}':
     parameters:
       - $ref: '#/components/parameters/groupName'
     get:
@@ -839,7 +839,7 @@ paths:
       description: Delete a group
       tags:
         - Groups
-  '/group/{name}/nodes':
+  '/group/{groupName}/nodes':
     parameters:
       - $ref: '#/components/parameters/groupName'
     get:
@@ -1020,7 +1020,7 @@ paths:
           Specify the nodes to be deleted.
 
           If the request body is empty, all nodes will be deleted.
-  '/group/{name}/meta':
+  '/group/{groupName}/meta':
     parameters:
       - $ref: '#/components/parameters/groupName'
     get:
@@ -1047,7 +1047,7 @@ paths:
           description: Group doesn't exist
       operationId: get-group-meta
       description: Get the groups metadata
-  '/group/{name}/permission-check':
+  '/group/{groupName}/permission-check':
     parameters:
       - $ref: '#/components/parameters/groupName'
     get:
@@ -1185,7 +1185,7 @@ paths:
       description: Create a new track.
       tags:
         - Tracks
-  '/track/{name}':
+  '/track/{trackName}':
     parameters:
       - $ref: '#/components/parameters/trackName'
     get:
