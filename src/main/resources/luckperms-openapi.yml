@@ -491,6 +491,13 @@ paths:
       summary: Get a users metadata
       tags:
         - Users
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/ContextSet'
+          in: query
+          name: context
+          description: The context to filter the metadata by
+          required: false
       responses:
         '200':
           description: OK

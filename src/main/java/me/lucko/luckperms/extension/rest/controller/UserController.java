@@ -49,6 +49,7 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.model.user.UserManager;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.matcher.NodeMatcher;
+import net.luckperms.api.query.QueryMode;
 import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.DemotionResult;
 import net.luckperms.api.track.PromotionResult;
@@ -305,8 +306,18 @@ public class UserController implements PermissionHolderController {
     @Override
     public void metaGet(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
+
+        String contextJson = ctx.queryParam("context");
+        ContextSet contextSet = contextJson != null ? this.objectMapper.readValue(contextJson, ContextSet.class) : null;
+
         CompletableFuture<CachedMetaData> future = loadUserCached(uniqueId)
-                .thenApply(user -> user.getCachedData().getMetaData());
+                .thenApply(user -> {
+                    if (contextSet != null) {
+                        return user.getCachedData().getMetaData(QueryOptions.builder(QueryMode.CONTEXTUAL).context(contextSet).build());
+                    }
+
+                    return user.getCachedData().getMetaData();
+                });
         ctx.future(future);
     }
 
