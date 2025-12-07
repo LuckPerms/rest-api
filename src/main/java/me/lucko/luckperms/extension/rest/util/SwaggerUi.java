@@ -25,11 +25,9 @@
 
 package me.lucko.luckperms.extension.rest.util;
 
-import io.javalin.core.JavalinConfig;
-import io.javalin.plugin.openapi.OpenApiOptions;
-import io.javalin.plugin.openapi.OpenApiPlugin;
-import io.javalin.plugin.openapi.ui.SwaggerOptions;
-import io.swagger.v3.oas.models.OpenAPI;
+import io.javalin.apibuilder.ApiBuilder;
+import io.javalin.config.JavalinConfig;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import me.lucko.luckperms.extension.rest.RestServer;
 
 import java.util.Objects;
@@ -37,20 +35,20 @@ import java.util.Objects;
 public class SwaggerUi {
 
     public static void setup(JavalinConfig config) {
-        // override the /docs/openapi endpoint to return our own schema
-        config.registerPlugin(app ->
-                app.get("/docs/openapi",
-                        ctx -> ctx.result(Objects.requireNonNull(RestServer.class.getClassLoader().getResourceAsStream("luckperms-openapi.yml")))
-                )
-        );
+        // Serve our custom OpenAPI YAML specification
+        config.router.apiBuilder(() -> {
+            ApiBuilder.get("/docs/openapi", ctx ->
+                    ctx.result(Objects.requireNonNull(RestServer.class.getClassLoader().getResourceAsStream("luckperms-openapi.yml")))
+                            .contentType("application/x-yaml")
+            );
+        });
 
-        // configure the javalin handler
-        OpenApiOptions opts = new OpenApiOptions(OpenAPI::new)
-                .path("openapi")
-                .swagger(new SwaggerOptions("/docs/swagger-ui")
-                        .title("LuckPerms API")
-                );
-        config.registerPlugin(new OpenApiPlugin(opts));
+        // Register Swagger UI plugin with custom OpenAPI spec injection
+        config.registerPlugin(new SwaggerPlugin(swaggerConfig -> {
+            swaggerConfig.setUiPath("/docs/swagger-ui");
+            // Inject our custom OpenAPI spec URL
+            swaggerConfig.injectCustomVersion("default", "/docs/openapi");
+        }));
     }
 
 }

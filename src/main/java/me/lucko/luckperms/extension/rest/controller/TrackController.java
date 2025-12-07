@@ -26,29 +26,16 @@
 package me.lucko.luckperms.extension.rest.controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.Context;
 import me.lucko.luckperms.extension.rest.RestConfig;
-import me.lucko.luckperms.extension.rest.model.GroupSearchResult;
-import me.lucko.luckperms.extension.rest.model.PermissionCheckRequest;
-import me.lucko.luckperms.extension.rest.model.PermissionCheckResult;
-import me.lucko.luckperms.extension.rest.model.SearchRequest;
-import me.lucko.luckperms.extension.rest.util.ParamUtils;
-import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.messaging.MessagingService;
-import net.luckperms.api.model.data.TemporaryNodeMergeStrategy;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.group.GroupManager;
-import net.luckperms.api.node.Node;
-import net.luckperms.api.node.matcher.NodeMatcher;
-import net.luckperms.api.query.QueryOptions;
 import net.luckperms.api.track.Track;
 import net.luckperms.api.track.TrackManager;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -95,7 +82,7 @@ public class TrackController {
         }
 
         CompletableFuture<Track> future = this.trackManager.createAndLoadTrack(body.name);
-        ctx.future(future, result -> ctx.status(201).json(result));
+        ctx.future(() -> future.thenAccept(result -> ctx.status(201).json(result)));
     }
 
     record CreateReq(@JsonProperty(required = true) String name) { }
@@ -107,20 +94,20 @@ public class TrackController {
                         .map(Track::getName)
                         .collect(Collectors.toList())
                 );
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /track/{id}
     public void get(Context ctx) {
         String name = ctx.pathParam("id");
         CompletableFuture<Track> future = loadTrackCached(name);
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Track doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // PATCH /track/{id}
@@ -154,13 +141,13 @@ public class TrackController {
             }
         });
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Track doesn't exist");
             } else {
                 ctx.result("ok");
             }
-        });
+        }));
     }
 
     record UpdateReq(@JsonProperty(required = true) List<String> groups) { }
@@ -179,12 +166,12 @@ public class TrackController {
                 return CompletableFuture.completedFuture(false);
             }
         });
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == Boolean.FALSE) {
                 ctx.status(404).result("Track doesn't exist");
             } else {
                 ctx.status(200).result("ok");
             }
-        });
+        }));
     }
 }

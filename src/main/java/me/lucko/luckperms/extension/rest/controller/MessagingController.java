@@ -82,11 +82,12 @@ public class MessagingController {
                 ? CompletableFuture.completedFuture(u)
                 : this.userManager.loadUser(uniqueId);
 
-        ctx.future(userFuture.thenAccept(user -> {
+        ctx.future(() -> userFuture.thenAccept(user -> {
             if (user != null) {
                 this.messagingService.pushUserUpdate(user);
             }
-        }), result -> ctx.status(202).result("ok"));
+            ctx.status(202).result("ok");
+        }));
     }
 
     // POST /custom

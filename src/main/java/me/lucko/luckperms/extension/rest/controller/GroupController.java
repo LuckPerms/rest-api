@@ -91,7 +91,7 @@ public class GroupController implements PermissionHolderController {
         }
 
         CompletableFuture<Group> future = this.groupManager.createAndLoadGroup(body.name);
-        ctx.future(future, result -> ctx.status(201).json(result));
+        ctx.future(() -> future.thenAccept(result -> ctx.status(201).json(result)));
     }
 
     record CreateReq(@JsonProperty(required = true) String name) { }
@@ -104,7 +104,7 @@ public class GroupController implements PermissionHolderController {
                         .map(Group::getName)
                         .collect(Collectors.toList())
                 );
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /group/search
@@ -116,7 +116,7 @@ public class GroupController implements PermissionHolderController {
                         .map(e -> new GroupSearchResult(e.getKey(), e.getValue()))
                         .toList()
                 );
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /group/{id}
@@ -124,13 +124,13 @@ public class GroupController implements PermissionHolderController {
     public void get(Context ctx) {
         String name = ctx.pathParam("id");
         CompletableFuture<Group> future = loadGroupCached(name);
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // PATCH /group/{id}
@@ -154,13 +154,13 @@ public class GroupController implements PermissionHolderController {
                 return CompletableFuture.completedFuture(false);
             }
         });
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == Boolean.FALSE) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.status(200).result("ok");
             }
-        });
+        }));
     }
 
     // GET /group/{id}/nodes
@@ -169,13 +169,13 @@ public class GroupController implements PermissionHolderController {
         String name = ctx.pathParam("id");
         CompletableFuture<Collection<Node>> future = loadGroupCached(name)
                 .thenApply(group -> group == null ? null : group.getNodes());
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // PATCH /group/{id}/nodes
@@ -200,13 +200,13 @@ public class GroupController implements PermissionHolderController {
             }
         });
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
 
@@ -236,13 +236,13 @@ public class GroupController implements PermissionHolderController {
                 return CompletableFuture.completedFuture(false);
             }
         });
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == Boolean.FALSE) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.status(200).result("ok");
             }
-        });
+        }));
     }
 
     // POST /group/{id}/nodes
@@ -265,13 +265,13 @@ public class GroupController implements PermissionHolderController {
             }
         });
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // PUT /group/{id}/nodes
@@ -296,13 +296,13 @@ public class GroupController implements PermissionHolderController {
             }
         });
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // GET /group/{id}/meta
@@ -311,13 +311,13 @@ public class GroupController implements PermissionHolderController {
         String name = ctx.pathParam("id");
         CompletableFuture<CachedMetaData> future = loadGroupCached(name)
                 .thenApply(group -> group == null ? null : group.getCachedData().getMetaData());
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // GET /group/{id}/permission-check
@@ -331,13 +331,13 @@ public class GroupController implements PermissionHolderController {
 
         CompletableFuture<PermissionCheckResult> future = loadGroupCached(name)
                 .thenApply(group -> group == null ? null : PermissionCheckResult.from(group.getCachedData().getPermissionData().queryPermission(permission)));
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // POST /group/{id}/permission-check
@@ -358,13 +358,13 @@ public class GroupController implements PermissionHolderController {
                     return PermissionCheckResult.from(group.getCachedData().getPermissionData(options).queryPermission(req.permission()));
                 }).orElse(null));
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404).result("Group doesn't exist");
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // POST /group/{id}/promote
