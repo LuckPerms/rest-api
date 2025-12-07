@@ -101,12 +101,12 @@ public class UserController implements PermissionHolderController {
         CreateReq body = ctx.bodyAsClass(CreateReq.class);
 
         CompletableFuture<PlayerSaveResult> future = this.userManager.savePlayerData(body.uniqueId, body.username);
-        ctx.future(future, result -> {
-            if (((PlayerSaveResult) result).includes(PlayerSaveResult.Outcome.CLEAN_INSERT)) {
+        ctx.future(() -> future.thenAccept(result -> {
+            if (result.includes(PlayerSaveResult.Outcome.CLEAN_INSERT)) {
                 ctx.status(201);
             }
             ctx.json(result);
-        });
+        }));
     }
 
     record CreateReq(@JsonProperty(required = true) UUID uniqueId, @JsonProperty(required = true) String username) { }
@@ -115,7 +115,7 @@ public class UserController implements PermissionHolderController {
     @Override
     public void getAll(Context ctx) {
         CompletableFuture<Set<UUID>> future = this.userManager.getUniqueUsers();
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /user/search
@@ -127,7 +127,7 @@ public class UserController implements PermissionHolderController {
                         .map(e -> new UserSearchResult(e.getKey(), e.getValue()))
                         .toList()
                 );
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /user/lookup
@@ -153,26 +153,26 @@ public class UserController implements PermissionHolderController {
             throw new IllegalArgumentException("Must specify username or unique id");
         }
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404);
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // GET /user/{id}
     @Override
     public void get(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
-        ctx.future(loadUserCached(uniqueId), result -> {
+        ctx.future(() -> loadUserCached(uniqueId).thenAccept(result -> {
             if (result == null) {
                 ctx.status(404);
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // PATCH /user/{id}
@@ -180,7 +180,7 @@ public class UserController implements PermissionHolderController {
     public void update(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
         UpdateReq body = ctx.bodyAsClass(UpdateReq.class);
-        ctx.future(this.userManager.savePlayerData(uniqueId, body.username), result -> ctx.result("ok"));
+        ctx.future(() -> this.userManager.savePlayerData(uniqueId, body.username).thenAccept(result -> ctx.result("ok")));
     }
 
     record UpdateReq(@JsonProperty(required = true) String username) { }
@@ -204,7 +204,7 @@ public class UserController implements PermissionHolderController {
             });
         }
 
-        ctx.future(future, result -> ctx.result("ok"));
+        ctx.future(() -> future.thenAccept(result -> ctx.result("ok")));
     }
 
     // GET /user/{id}/nodes
@@ -212,13 +212,13 @@ public class UserController implements PermissionHolderController {
     public void nodesGet(Context ctx) throws JsonProcessingException {
         UUID uniqueId = pathParamAsUuid(ctx);
         CompletableFuture<Collection<Node>> future = loadUserCached(uniqueId).thenApply(PermissionHolder::getNodes);
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404);
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // PATCH /user/{id}/nodes
@@ -237,7 +237,7 @@ public class UserController implements PermissionHolderController {
                 return user.getNodes();
             });
         });
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
 
@@ -262,7 +262,7 @@ public class UserController implements PermissionHolderController {
                 return user.getNodes();
             });
         });
-        ctx.future(future, result -> ctx.result("ok"));
+        ctx.future(() -> future.thenAccept(result -> ctx.result("ok")));
     }
 
     // POST /user/{id}/nodes
@@ -279,7 +279,7 @@ public class UserController implements PermissionHolderController {
                 return user.getNodes();
             });
         });
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // PUT /user/{id}/nodes
@@ -298,7 +298,7 @@ public class UserController implements PermissionHolderController {
                 return user.getNodes();
             });
         });
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /user/{id}/meta
@@ -307,7 +307,7 @@ public class UserController implements PermissionHolderController {
         UUID uniqueId = pathParamAsUuid(ctx);
         CompletableFuture<CachedMetaData> future = loadUserCached(uniqueId)
                 .thenApply(user -> user.getCachedData().getMetaData());
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // GET /user/{id}/permission-check
@@ -323,7 +323,7 @@ public class UserController implements PermissionHolderController {
                 .thenApply(user -> user.getCachedData().getPermissionData().queryPermission(permission))
                 .thenApply(PermissionCheckResult::from);
 
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // POST /user/{id}/permission-check
@@ -345,7 +345,7 @@ public class UserController implements PermissionHolderController {
                 })
                 .thenApply(PermissionCheckResult::from);
 
-        ctx.future(future);
+        ctx.future(() -> future.thenAccept(ctx::json));
     }
 
     // POST /user/{id}/promote
@@ -371,13 +371,13 @@ public class UserController implements PermissionHolderController {
             }
         });
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404);
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 
     // POST /user/{id}/demote
@@ -403,12 +403,12 @@ public class UserController implements PermissionHolderController {
             }
         });
 
-        ctx.future(future, result -> {
+        ctx.future(() -> future.thenAccept(result -> {
             if (result == null) {
                 ctx.status(404);
             } else {
                 ctx.json(result);
             }
-        });
+        }));
     }
 }

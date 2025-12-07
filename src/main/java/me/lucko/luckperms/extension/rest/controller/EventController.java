@@ -25,7 +25,6 @@
 
 package me.lucko.luckperms.extension.rest.controller;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.javalin.http.sse.SseClient;
 import net.luckperms.api.event.EventBus;
 import net.luckperms.api.event.EventSubscription;
@@ -38,11 +37,12 @@ import net.luckperms.api.event.sync.PreNetworkSyncEvent;
 import net.luckperms.api.event.sync.PreSyncEvent;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class EventController implements AutoCloseable {
@@ -58,9 +58,14 @@ public class EventController implements AutoCloseable {
         this.clients = ConcurrentHashMap.newKeySet();
         this.pingCounter = new AtomicLong();
 
-        this.executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
-                .setNameFormat("luckperms-rest-event-controller-%d")
-                .build());
+        AtomicInteger threadCount = new AtomicInteger(0);
+        ThreadFactory threadFactory = r -> {
+            Thread thread = new Thread(r);
+            thread.setName("luckperms-rest-event-controller-" + threadCount.getAndIncrement());
+            thread.setDaemon(true);
+            return thread;
+        };
+        this.executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         this.executor.scheduleAtFixedRate(this::tick, 10, 10, TimeUnit.SECONDS);
     }
 
@@ -81,14 +86,13 @@ public class EventController implements AutoCloseable {
 
     private void handle(SseClient client, Class<? extends LuckPermsEvent> eventClass) {
         this.clients.add(client);
-        CompletableFuture<Object> future = new CompletableFuture<>();
+        // Keep the SSE connection alive
+        client.keepAlive();
         EventSubscription<?> subscription = this.eventBus.subscribe(eventClass, client::sendEvent);
         client.onClose(() -> {
-            future.complete(null);
             subscription.close();
             this.clients.remove(client);
         });
-        client.ctx.future(future);
 
     }
 

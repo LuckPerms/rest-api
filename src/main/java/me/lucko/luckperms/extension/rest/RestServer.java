@@ -28,13 +28,10 @@ package me.lucko.luckperms.extension.rest;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import com.google.common.collect.ImmutableSet;
 import io.javalin.Javalin;
-import io.javalin.core.JavalinConfig;
-import io.javalin.core.util.JavalinLogger;
-import io.javalin.http.HttpCode;
-import io.javalin.plugin.json.JavalinJackson;
-import io.javalin.plugin.openapi.utils.OpenApiVersionUtil;
+import io.javalin.config.JavalinConfig;
+import io.javalin.http.HttpStatus;
+import io.javalin.json.JavalinJackson;
 import me.lucko.luckperms.extension.rest.controller.ActionController;
 import me.lucko.luckperms.extension.rest.controller.EventController;
 import me.lucko.luckperms.extension.rest.controller.GroupController;
@@ -70,19 +67,27 @@ public class RestServer implements AutoCloseable {
 
     private final ObjectMapper objectMapper;
     private final Javalin app;
-    private final AutoCloseable routesClosable;
+    private final EventController eventController;
 
     public RestServer(LuckPerms luckPerms, String address, int port) {
         LOGGER.info("[REST] Starting server...");
 
         this.objectMapper = new CustomObjectMapper();
 
-        this.app = Javalin.create(this::configure)
+        MessagingService messagingService = luckPerms.getMessagingService().orElse(StubMessagingService.INSTANCE);
+
+        UserController userController = new UserController(luckPerms.getUserManager(), luckPerms.getTrackManager(), messagingService, this.objectMapper);
+        GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
+        TrackController trackController = new TrackController(luckPerms.getTrackManager(), luckPerms.getGroupManager(), messagingService, this.objectMapper);
+        ActionController actionController = new ActionController(luckPerms.getActionLogger(), this.objectMapper);
+        MessagingController messagingController = new MessagingController(luckPerms.getMessagingService().orElse(null), luckPerms.getUserManager(), this.objectMapper);
+        this.eventController = new EventController(luckPerms.getEventBus());
+
+        this.app = Javalin.create(config -> this.configure(config, luckPerms, userController, groupController, trackController, actionController, messagingController, this.eventController))
                 .start(address, port);
 
         this.setupLogging(this.app);
         this.setupErrorHandlers(this.app);
-        this.routesClosable = this.setupRoutes(this.app, luckPerms);
 
         LOGGER.info("[REST] Startup complete! Listening on http://{}:{}", address == null ? "localhost" : address, port);
     }
@@ -90,25 +95,45 @@ public class RestServer implements AutoCloseable {
     @Override
     public void close() {
         try {
-            this.routesClosable.close();
+            this.eventController.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        this.app.close();
+        this.app.stop();
     }
 
-    private void configure(JavalinConfig config) {
+    private void configure(JavalinConfig config, LuckPerms luckPerms, UserController userController, GroupController groupController, TrackController trackController, ActionController actionController, MessagingController messagingController, EventController eventController) {
         // disable javalin excessive logging
         config.showJavalinBanner = false;
-        JavalinLogger.enabled = false;
-        JavalinLogger.startupInfo = false;
-        OpenApiVersionUtil.INSTANCE.setLogWarnings(false);
+
+        // Enable webjars for Swagger UI assets
+        config.staticFiles.enableWebjars();
 
         this.setupAuth(config);
 
         SwaggerUi.setup(config);
 
-        config.jsonMapper(new JavalinJackson(this.objectMapper));
+        config.jsonMapper(new JavalinJackson(this.objectMapper, true));
+
+        // Setup routes
+        config.router.apiBuilder(() -> {
+            get("/", ctx -> ctx.redirect("/docs/swagger-ui"));
+
+            get("health", ctx -> {
+                Health health = luckPerms.runHealthCheck();
+                ctx.status(health.isHealthy() ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).json(health);
+            });
+
+            path("user", () -> {
+                get("lookup", userController::lookup);
+                setupControllerRoutes(userController);
+            });
+            path("group", () -> setupControllerRoutes(groupController));
+            path("track", () -> setupControllerRoutes(trackController));
+            path("action", () -> setupControllerRoutes(actionController));
+            path("messaging", () -> setupControllerRoutes(messagingController));
+            path("event", () -> setupControllerRoutes(eventController));
+        });
     }
 
     private void setupErrorHandlers(Javalin app) {
@@ -121,38 +146,6 @@ public class RestServer implements AutoCloseable {
             ctx.status(500).result("Server error");
             LOGGER.error("Server error while handing request", e);
         });
-    }
-
-    private AutoCloseable setupRoutes(Javalin app, LuckPerms luckPerms) {
-        app.get("/", ctx -> ctx.redirect("/docs/swagger-ui"));
-
-        app.get("health", ctx -> {
-            Health health = luckPerms.runHealthCheck();
-            ctx.status(health.isHealthy() ? HttpCode.OK : HttpCode.SERVICE_UNAVAILABLE).json(health);
-        });
-
-        MessagingService messagingService = luckPerms.getMessagingService().orElse(StubMessagingService.INSTANCE);
-
-        UserController userController = new UserController(luckPerms.getUserManager(), luckPerms.getTrackManager(), messagingService, this.objectMapper);
-        GroupController groupController = new GroupController(luckPerms.getGroupManager(), messagingService, this.objectMapper);
-        TrackController trackController = new TrackController(luckPerms.getTrackManager(), luckPerms.getGroupManager(), messagingService, this.objectMapper);
-        ActionController actionController = new ActionController(luckPerms.getActionLogger(), this.objectMapper);
-        MessagingController messagingController = new MessagingController(luckPerms.getMessagingService().orElse(null), luckPerms.getUserManager(), this.objectMapper);
-        EventController eventController = new EventController(luckPerms.getEventBus());
-
-        app.routes(() -> {
-            path("user", () -> {
-                get("lookup", userController::lookup);
-                setupControllerRoutes(userController);
-            });
-            path("group", () -> setupControllerRoutes(groupController));
-            path("track", () -> setupControllerRoutes(trackController));
-            path("action", () -> setupControllerRoutes(actionController));
-            path("messaging", () -> setupControllerRoutes(messagingController));
-            path("event", () -> setupControllerRoutes(eventController));
-        });
-
-        return eventController;
     }
 
     private void setupControllerRoutes(PermissionHolderController controller) {
@@ -225,7 +218,7 @@ public class RestServer implements AutoCloseable {
 
     private void setupAuth(JavalinConfig config) {
         if (RestConfig.getBoolean("auth", false)) {
-            Set<String> keys = ImmutableSet.copyOf(
+            Set<String> keys = Set.copyOf(
                     RestConfig.getStringList("auth.keys", Collections.emptyList())
             );
 
@@ -234,35 +227,40 @@ public class RestServer implements AutoCloseable {
                 LOGGER.warn("[REST] Set some keys with the 'LUCKPERMS_REST_AUTH_KEYS' variable.");
             }
 
-            config.accessManager((handler, ctx, routeRoles) -> {
-                if (ctx.path().equals("/") || ctx.path().startsWith("/docs")) {
-                    handler.handle(ctx);
-                    return;
-                }
+            config.router.mount(router -> {
+                router.beforeMatched(ctx -> {
+                    // Skip auth for root, docs, and webjars (Swagger UI assets)
+                    String path = ctx.path();
+                    if (path.equals("/") || path.startsWith("/docs") || path.startsWith("/webjars")) {
+                        return;
+                    }
 
-                String authorization = ctx.header("Authorization");
-                if (authorization == null) {
-                    ctx.status(HttpCode.UNAUTHORIZED).result("No API key");
-                    return;
-                }
+                    String authorization = ctx.header("Authorization");
+                    if (authorization == null) {
+                        ctx.status(HttpStatus.UNAUTHORIZED).result("No API key");
+                        ctx.skipRemainingHandlers();
+                        return;
+                    }
 
-                String[] parts = authorization.split(" ");
-                if (parts.length != 2) {
-                    ctx.status(HttpCode.UNAUTHORIZED).result("Invalid API key");
-                    return;
-                }
+                    String[] parts = authorization.split(" ");
+                    if (parts.length != 2) {
+                        ctx.status(HttpStatus.UNAUTHORIZED).result("Invalid API key");
+                        ctx.skipRemainingHandlers();
+                        return;
+                    }
 
-                if (!parts[0].equals("Bearer")) {
-                    ctx.status(HttpCode.UNAUTHORIZED).result("Unknown Authorization type");
-                    return;
-                }
+                    if (!parts[0].equals("Bearer")) {
+                        ctx.status(HttpStatus.UNAUTHORIZED).result("Unknown Authorization type");
+                        ctx.skipRemainingHandlers();
+                        return;
+                    }
 
-                if (!keys.contains(parts[1])) {
-                    ctx.status(HttpCode.UNAUTHORIZED).result("Unauthorized");
-                    return;
-                }
-
-                handler.handle(ctx);
+                    if (!keys.contains(parts[1])) {
+                        ctx.status(HttpStatus.UNAUTHORIZED).result("Unauthorized");
+                        ctx.skipRemainingHandlers();
+                        return;
+                    }
+                });
             });
         }
     }
@@ -271,14 +269,14 @@ public class RestServer implements AutoCloseable {
         app.before(ctx -> {
             ctx.attribute("startTime", System.currentTimeMillis());
             if (ctx.path().startsWith("/event/")) {
-                LOGGER.info("[REST] %s %s - %d".formatted(ctx.method(), ctx.path(), ctx.status()));
+                LOGGER.info("[REST] {} {} - {}", ctx.method(), ctx.path(), ctx.status());
             }
         });
         app.after(ctx -> {
             //noinspection ConstantConditions
             long startTime = ctx.attribute("startTime");
             long duration = System.currentTimeMillis() - startTime;
-            LOGGER.info("[REST] %s %s - %d - %dms".formatted(ctx.method(), ctx.path(), ctx.status(), duration));
+            LOGGER.info("[REST] {} {} - {} - {}ms", ctx.method(), ctx.path(), ctx.status(), duration);
         });
     }
 

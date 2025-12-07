@@ -56,7 +56,7 @@ public class ActionController {
         if (pageSize == null && pageNumber == null) {
             CompletableFuture<ActionPage> future = this.actionLogger.queryActions(filter)
                     .thenApply(list -> new ActionPage(list, list.size()));
-            ctx.future(future);
+            ctx.future(() -> future.thenAccept(ctx::json));
         } else {
             if (pageSize == null) {
                 ctx.status(400).result("pageSize query parameter is required when pageNumber is provided");
@@ -68,7 +68,7 @@ public class ActionController {
 
             CompletableFuture<ActionPage> future = this.actionLogger.queryActions(filter, pageSize, pageNumber)
                     .thenApply(ActionPage::from);
-            ctx.future(future);
+            ctx.future(() -> future.thenAccept(ctx::json));
         }
     }
 
@@ -77,7 +77,7 @@ public class ActionController {
         Action req = ctx.bodyAsClass(Action.class);
 
         CompletableFuture<Void> future = this.actionLogger.submit(req);
-        ctx.future(future, result -> ctx.status(202).result("ok"));
+        ctx.future(() -> future.thenAccept(result -> ctx.status(202).result("ok")));
     }
 
 }
